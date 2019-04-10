@@ -1,1 +1,0 @@
-﻿alter table retail_pos_assistant_signin alter COLUMN id set data type varchar(32);
