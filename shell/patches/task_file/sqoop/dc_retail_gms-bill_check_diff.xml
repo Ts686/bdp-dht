@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_retail_gms.bill_check_diff-->
+  <id>135</id>
+  <taskType>100</taskType>
+  <groupName>dc_retail_gms</groupName>
+  <triggerName>bill_check_diff</triggerName>
+  <sourceDbId>6</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>bill_check_diff</sourceTable>
+  <dependencyTaskIds/>
+  <relationColumns>bill_no</relationColumns>
+  <primaryKeys>id</primaryKeys>
+  <selectColumns>id,bill_no,bill_type,status,ref_bill_no,ref_bill_type,sys_no,shop_no,store_no,store_name,order_unit_no,order_unit_name,brand_no,brand_name,merchandiser,price_type,check_type,check_date,create_user,create_time,auditor,audit_time,update_time,remark,zone_yyyymm,ifnull(update_time:create_time) as yw_update_time</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>create_time,update_time</syncTimeColumn>
+  <targetDbId>1</targetDbId>
+  <targetTable>retail_gms_bill_check_diff</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+  <filterConditions>and t.status not in(0)</filterConditions>
+</root>

@@ -1,0 +1,53 @@
+<assembly  
+    xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"  
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  
+    xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+	<id>${project.parent.version}.${timestamp}</id>
+	<!-- zip中包含目录 -->
+	<includeBaseDirectory>false</includeBaseDirectory>
+	<formats>
+		<format>zip</format>
+	</formats>
+	<fileSets>
+		<fileSet>
+			<directory>target/appassembler/lib</directory>
+			<outputDirectory>/${project.build.finalName}/lib</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/appassembler/bin</directory>
+			<outputDirectory>/${project.build.finalName}/bin</outputDirectory>
+			<fileMode>0744</fileMode>
+			<directoryMode>0744</directoryMode>
+		</fileSet>
+		<fileSet>
+			<directory>../conf</directory>
+			<outputDirectory>/conf</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>../sql</directory>
+			<outputDirectory>/sql</outputDirectory>
+		</fileSet>		
+		<fileSet>
+			<directory>../shell</directory>
+			<outputDirectory>/bdp-dht/bin</outputDirectory>
+		</fileSet>
+	</fileSets>
+	<!-- 
+	<files>
+		<file>
+			<source>target/${project.build.finalName}.jar</source>
+			<outputDirectory>${project.build.finalName}/lib</outputDirectory>
+			<destName>${project.build.finalName}-manager-${project.parent.version}.jar</destName>
+		</file>
+	</files>
+	-->
+	<!--
+	<dependencySets>  
+        <dependencySet>  
+            <useProjectArtifact>true</useProjectArtifact>
+            <outputDirectory>${project.build.finalName}/lib</outputDirectory> 将scope为runtime的依赖包打包到lib目录下。   
+            <scope>runtime</scope>
+        </dependencySet>  
+    </dependencySets>
+     -->
+</assembly>

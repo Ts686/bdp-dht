@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm.bi_mdm_org_organ_managing_area-->
+  <id>963</id>
+  <taskType>120</taskType>
+  <groupName>dc_bi_mdm</groupName>
+  <triggerName>org_organ_managing_area_cln</triggerName>
+  <sourceDbId>1</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>bi_mdm_org_organ_managing_area</sourceTable>
+  <dependencyTaskIds>836</dependencyTaskIds>
+  <relationColumns>managing_area_no</relationColumns>
+  <primaryKeys>id</primaryKeys>
+  <selectColumns/>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>0</targetDbId>
+  <targetTable>bi_mdm_org_organ_managing_area_cln</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>1</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

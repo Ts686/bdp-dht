@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm.sup_supplier_extension-->
+  <id>885</id>
+  <taskType>100</taskType>
+  <groupName>dc_bi_mdm</groupName>
+  <triggerName>sup_supplier_extension</triggerName>
+  <sourceDbId>11</sourceDbId>
+  <sourceParentTableId>884</sourceParentTableId>
+  <sourceTable>sup_supplier_extension</sourceTable>
+  <dependencyTaskIds>884</dependencyTaskIds>
+  <relationColumns>supplier_no</relationColumns>
+  <primaryKeys>extension_attribute_id</primaryKeys>
+  <selectColumns>extension_attribute_id,supplier_no,attribute_no,attribute_detail_no,editor,edittm,createtm,edit_flag,remarks,ifnull(edittm:createtm) as yw_update_time</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>1</targetDbId>
+  <targetTable>bi_mdm_sup_supplier_extension</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>1</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

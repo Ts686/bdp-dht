@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wonhigh.dc.client.dal.mapper.ClientTaskStatusLogMapper">
+	<resultMap id="BaseResultMap"
+		type="cn.wonhigh.dc.client.common.model.ClientTaskStatusLog">
+		<id column="id" property="id" jdbcType="VARCHAR" />
+		<result column="task_id" property="taskId" jdbcType="VARCHAR" />
+		<result column="scheduler_name" property="schedulerName"
+			jdbcType="VARCHAR" />
+		<result column="group_name" property="groupName" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="task_status" property="taskStatus" jdbcType="VARCHAR" />
+		<result column="task_status_desc" property="taskStatusDesc"
+			jdbcType="VARCHAR" />
+		<result column="sync_begin_time" property="syncBeginTime"
+			jdbcType="TIMESTAMP" />
+		<result column="sync_end_time" property="syncEndTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	<sql id="columnLists">
+		ctslm.id,ctslm.task_id,ctslm.scheduler_name,ctslm.group_name,ctslm.create_time,ctslm.task_status,ctslm.task_status_desc,ctslm.sync_begin_time,ctslm.sync_end_time
+	</sql>
+	<select id="selectByLatestSystime" resultMap="BaseResultMap"
+		parameterType="java.util.Map">
+		<choose>
+			<when test="params.depenSchedulerName != null and params.depenGroupName != null">
+			select * from (select
+		<include refid="columnLists" />
+		from client_task_status_log ctslm where
+		ctslm.scheduler_name = #{params.schedulerName}
+		and ctslm.group_name = #{params.groupName} and
+		ctslm.task_status=#{params.taskStatus} and ctslm.create_time &gt;
+		#{params.startSelectDate}
+		order by sync_end_time desc limit 1) a
+		union
+		select * from (select
+		<include refid="columnLists" />
+		from client_task_status_log ctslm where
+		ctslm.scheduler_name = #{params.depenSchedulerName}
+		and ctslm.group_name = #{params.depenGroupName} and
+		ctslm.task_status=#{params.taskStatus} and ctslm.create_time &gt;
+		#{params.startSelectDate}
+		order by sync_end_time desc limit 1) b
+			</when>
+			<otherwise>
+			select
+		<include refid="columnLists" />
+		from client_task_status_log ctslm where
+		ctslm.scheduler_name = #{params.schedulerName}
+		and ctslm.group_name = #{params.groupName} and
+		ctslm.task_status=#{params.taskStatus} and ctslm.create_time &gt;
+		#{params.startSelectDate}
+		order by sync_end_time desc limit 1
+			</otherwise>
+		</choose>
+	</select>
+	<select id="selectLastestStatus" resultMap="BaseResultMap"
+		parameterType="java.util.Map">
+		select
+		<include refid="columnLists" />
+		from client_task_status_log ctslm where
+		scheduler_name=#{params.schedulerName}
+		and group_name=#{params.groupName} and task_id = #{params.taskId}
+	</select>
+	<select id="selectLastestTwoDaysFin" resultType="int"
+		parameterType="java.util.Map">
+		select
+		count(1) from client_task_status_log ctsln where DATE_SUB(CURDATE(), INTERVAL 2 DAY) &lt; date(ctsln.create_time) 
+		and ctsln.task_id =#{params.handleId} and ctsln.task_status ="FINISHED"
+	</select>
+		<select id="selectLastestStatusList" resultMap="BaseResultMap"
+		parameterType="java.util.Map">
+		select
+		<include refid="columnLists" />
+		from client_task_status_log ctslm, (select
+		ctsln.group_name,ctsln.scheduler_name,max(ctsln.create_time)
+		create_time from client_task_status_log ctsln where ctsln.create_time
+		&gt; #{params.startSelectDate} and ctsln.group_name not like '%_kettle' group by
+		ctsln.group_name,ctsln.scheduler_name) max_result
+		where ctslm.create_time = max_result.create_time and ctslm.group_name =
+		max_result.group_name and ctslm.scheduler_name =
+		max_result.scheduler_name and ctslm.create_time &gt;
+		#{params.startSelectDate}
+	</select>
+	<select id="selectByLastEndTime" resultMap="BaseResultMap"
+		parameterType="java.util.Map">
+		select
+		<include refid="columnLists" />
+		from client_task_status_log ctslm where
+		ctslm.scheduler_name = #{params.schedulerName}
+		and ctslm.group_name = #{params.groupName} and
+		ctslm.task_status=#{params.taskStatus} and ctslm.sync_end_time &gt;
+		#{params.startSelectDate}
+		order by sync_end_time asc
+	</select>
+	<insert id="insertClientTaskStatusLog" useGeneratedKeys="true"
+		keyProperty="id" parameterType="cn.wonhigh.dc.client.common.model.ClientTaskStatusLog">
+		<trim prefix="insert into client_task_status_log (" suffix=")"
+			suffixOverrides=",">
+			<if test="taskId != null">task_id,</if>
+			<if test="schedulerName != null">scheduler_name,</if>
+			<if test="groupName != null">group_name,</if>
+			<if test="createTime != null">create_time,</if>
+			<if test="taskStatus != null">task_status,</if>
+			<if test="taskStatusDesc != null">task_status_desc,</if>
+			<if test="syncBeginTime != null">sync_begin_time,</if>
+			<if test="syncEndTime != null">sync_end_time,</if>
+		</trim>
+		<trim prefix="values(" suffixOverrides="," suffix=")">
+			<if test="taskId != null">#{taskId},</if>
+			<if test="schedulerName != null">#{schedulerName},</if>
+			<if test="groupName != null">#{groupName},</if>
+			<if test="createTime != null">#{createTime},</if>
+			<if test="taskStatus != null">#{taskStatus},</if>
+			<if test="taskStatusDesc != null">#{taskStatusDesc},</if>
+			<if test="syncBeginTime != null">#{syncBeginTime},</if>
+			<if test="syncEndTime != null">#{syncEndTime},</if>
+		</trim>
+	</insert>
+</mapper>

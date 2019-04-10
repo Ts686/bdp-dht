@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_retail_fas_hive.retail_fas_region_cost_maintain_cln-->
+  <id>1060</id>
+  <taskType>200</taskType>
+  <groupName>dc_retail_fas_hive</groupName>
+  <triggerName>region_cost_maintain</triggerName>
+  <sourceDbId>1</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>retail_fas_region_cost_maintain_cln</sourceTable>
+  <dependencyTaskIds>953</dependencyTaskIds>
+  <relationColumns>id</relationColumns>
+  <primaryKeys>id</primaryKeys>
+  <selectColumns>id,zone_no,zone_name,item_no,item_code,item_name,brand_no,brand_name,supplier_no,supplier_name,effective_time,add_rule_no,add_basis,add_price,add_discount,discount_rate,region_cost,create_user,create_time,update_user,update_time,zone_yyyymm</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>create_time,update_time</syncTimeColumn>
+  <targetDbId>4</targetDbId>
+  <targetTable>retail_fas_region_cost_maintain</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

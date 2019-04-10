@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm.org_store_extension-->
+  <id>854</id>
+  <taskType>100</taskType>
+  <groupName>dc_bi_mdm</groupName>
+  <triggerName>org_store_extension</triggerName>
+  <sourceDbId>11</sourceDbId>
+  <sourceParentTableId>847</sourceParentTableId>
+  <sourceTable>org_store_extension</sourceTable>
+  <dependencyTaskIds>847</dependencyTaskIds>
+  <relationColumns>store_no</relationColumns>
+  <primaryKeys>extension_attribute_id</primaryKeys>
+  <selectColumns>extension_attribute_id,store_no,attribute_no,brand_detail_no,attribute_detail_no,attribute_flag,status,editor,edittm,createtm,edit_flag,remarks,ifnull(edittm:createtm) as yw_update_time</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>1</targetDbId>
+  <targetTable>bi_mdm_org_store_extension</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>1</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+  <filterConditions>and t.store_status not in(0)</filterConditions>
+</root>

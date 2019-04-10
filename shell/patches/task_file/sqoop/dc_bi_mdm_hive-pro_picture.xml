@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm_hive.bi_mdm_pro_picture_cln-->
+  <id>1091</id>
+  <taskType>200</taskType>
+  <groupName>dc_bi_mdm_hive</groupName>
+  <triggerName>pro_picture</triggerName>
+  <sourceDbId>1</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>bi_mdm_pro_picture_cln</sourceTable>
+  <dependencyTaskIds>984</dependencyTaskIds>
+  <relationColumns>picture_no</relationColumns>
+  <primaryKeys>picture_no</primaryKeys>
+  <selectColumns>picture_id,picture_no,product_no,product_code,brand_no,picture_url,picture_flag,order_no,editor,edittm,createtm,edit_flag,remarks</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>4</targetDbId>
+  <targetTable>bi_mdm_pro_picture</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

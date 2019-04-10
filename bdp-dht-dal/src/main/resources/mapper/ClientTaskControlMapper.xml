@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wonhigh.dc.client.dal.mapper.ClientTaskControlMapper">
+	<resultMap id="BaseResultMap" type="cn.wonhigh.dc.client.common.model.ClientTaskControl">
+		<id column="id" property="id" jdbcType="DECIMAL" />
+		<id column="group_name" property="groupName" jdbcType="VARCHAR" />
+		<id column="scheduler_name" property="schedulerName" jdbcType="VARCHAR" />
+		<id column="source_db_type" property="sourceDbType" jdbcType="DECIMAL" />
+		<id column="source_db_url" property="sourceDbUrl" jdbcType="VARCHAR" />
+		<id column="source_db_user" property="sourceDbUser" jdbcType="VARCHAR" />
+		<id column="source_db_pass" property="sourceDbPass" jdbcType="VARCHAR" />
+		<id column="source_sql_str" property="sourceSqlStr" jdbcType="VARCHAR" />
+		<id column="target_db_type" property="targetDbType" jdbcType="DECIMAL" />
+		<id column="target_db_url" property="targetDbUrl" jdbcType="VARCHAR" />
+		<id column="target_db_user" property="targetDbUser" jdbcType="VARCHAR" />
+		<id column="target_db_pass" property="targetDbPass" jdbcType="VARCHAR" />
+		<id column="target_table_name" property="targetTableName" jdbcType="VARCHAR" />
+		<id column="task_begin_time" property="taskBeginTime" jdbcType="TIMESTAMP" />
+		<id column="task_exec_freq" property="taskExecFreq" jdbcType="DECIMAL" />
+		<id column="task_status" property="taskStatus" jdbcType="DECIMAL" />
+		<id column="data_status" property="dataStatus" jdbcType="DECIMAL" />
+		<id column="source_main_table" property="sourceMainTable" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	
+	<sql id="columnLists">
+	id,group_name,scheduler_name,source_db_type,source_db_url,source_db_user,source_db_pass,source_sql_str,target_db_type,target_db_url,target_db_user,
+	target_db_pass,target_table_name,task_begin_time,task_exec_freq,task_status,data_status,create_time,source_main_table
+	</sql>
+	<select id="selectByParams" resultMap="BaseResultMap" parameterType="java.util.Map">
+		select <include refid="columnLists"/> from client_task_control where data_status = 1 and task_status = 0 and scheduler_name = #{params.triggerName} AND group_name = #{params.groupName}
+	</select>
+	<select id="selectById" resultMap="BaseResultMap" parameterType="java.util.Map">
+		select <include refid="columnLists"/> from client_task_control where id = #{params.id}
+	</select>
+	<update id="updateByPrimaryKey" parameterType="cn.wonhigh.dc.client.common.model.ClientTaskControl">
+		update client_task_control
+		<set>
+			<trim suffixOverrides=",">
+				<if test="taskBeginTime != null">task_begin_time = #{taskBeginTime,jdbcType=TIMESTAMP},</if>
+				<if test="taskStatus != null">task_status = #{taskStatus,jdbcType=INTEGER},</if>
+			</trim>
+		</set>
+		<where>
+			<if test="id != null">id = #{id}</if>
+		</where>
+	</update>
+	
+</mapper>

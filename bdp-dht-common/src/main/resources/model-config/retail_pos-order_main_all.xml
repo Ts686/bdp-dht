@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_retail_pos_hive.retail_pos_order_main_cln-->
+  <id>1039</id>
+  <taskType>200</taskType>
+  <groupName>dc_retail_pos_hive</groupName>
+  <triggerName>order_main</triggerName>
+  <sourceDbId>1</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>retail_pos_order_main_cln</sourceTable>
+  <dependencyTaskIds>932</dependencyTaskIds>
+  <relationColumns>id</relationColumns>
+  <primaryKeys>id</primaryKeys>
+  <selectColumns>id,order_no,shop_no,shop_name,shop_no_from,shop_name_from,serial_no,out_date,qty,tag_price_amount,sale_price_amount,disc_price_amount,settle_amount,reduce_amount,total_rebate_amount,pref_amount,coupon_amount,all_amount,amount,remain_amount,score_amount,assistant_name,assistant_id,assistant_no,vip_no,vip_brand_no,vip_name,vip_phone,wildcard_no,wildcard_name,wildcard_discount,base_score,pro_score,cost_score,order_type,business_type,biz_type_code,biz_type_name,order_source,daily_flag,daily_datetime,monthly_flag,monthly_datetime,balance_no,remark,status,actual_postage,message_code,express_company,bill_transfer_no,express_no,take_mode,logistics_mode,market_ticket_no,lock_flag,return_exchange_time,shop_terminal_no,invoice_apply_no,invoice_apply_date,invoice_no,invoice_amount,invoice_date,pickup_date,zone_yyyymm,check_user_no,check_user,create_user_no,create_user,create_time,update_user_no,update_user,update_time,adjust_flag,adjust_user,adjust_time,adjust_order_reason,responsibility_name,responsibility_no,responsibility_id,sharding_flag,remain_score,accumulated_score,notice_user,notice_time,notice_flag,pay_time,refund_status,place_date,reprint,yw_update_time</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>create_time,update_time</syncTimeColumn>
+  <targetDbId>4</targetDbId>
+  <targetTable>retail_pos_order_main</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+  <exportMapSize>5</exportMapSize>
+  <exportDateSpan>40</exportDateSpan>
+  <filterConditions></filterConditions>
+</root>
