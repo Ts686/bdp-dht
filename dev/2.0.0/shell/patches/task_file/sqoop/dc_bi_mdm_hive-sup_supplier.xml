@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm_hive.bi_mdm_sup_supplier_cln-->
+  <id>1097</id>
+  <taskType>200</taskType>
+  <groupName>dc_bi_mdm_hive</groupName>
+  <triggerName>sup_supplier</triggerName>
+  <sourceDbId>1</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>bi_mdm_sup_supplier_cln</sourceTable>
+  <dependencyTaskIds>990</dependencyTaskIds>
+  <relationColumns>supplier_no</relationColumns>
+  <primaryKeys>supplier_no</primaryKeys>
+  <selectColumns>supplier_id,supplier_no,supplier_code,supplier_name,supplier_type,can_order,bank_name,bank_account_code,bank_account_name,tax_registration_code,registration_leven,legal_representative,certificate_code,contact,cman_address,telno,fax_code,email,postcode,province_no,city_no,county_no,income_tax_rates,order_no,status,editor,edittm,createtm,edit_flag,remarks</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>4</targetDbId>
+  <targetTable>bi_mdm_sup_supplier</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

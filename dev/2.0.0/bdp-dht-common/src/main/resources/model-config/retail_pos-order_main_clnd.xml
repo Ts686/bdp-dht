@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_retail_pos.retail_pos_order_main-->
+  <id>55557</id>
+  <taskType>120</taskType>
+  <groupName>retail_pos</groupName>
+  <triggerName>order_main_clnd</triggerName>
+  <sourceDbId>18</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>retail_pos_order_main_src</sourceTable>
+  <dependencyTaskIds>55556</dependencyTaskIds>
+  <relationColumns>id</relationColumns>
+  <primaryKeys>id</primaryKeys>
+  <selectColumns> src_t.id, src_t.company_no, src_t.company_name, src_t.order_no, src_t.ref_bill_no, src_t.shop_no, src_t.shop_name, src_t.shop_no_from, src_t.shop_name_from, src_t.serial_no, src_t.out_date, src_t.qty, src_t.tag_price_amount, src_t.sale_price_amount, src_t.disc_price_amount, src_t.settle_amount, src_t.reduce_amount, src_t.total_rebate_amount, src_t.pref_amount, src_t.coupon_amount, src_t.all_amount, src_t.amount, src_t.remain_amount, src_t.score_amount, src_t.assistant_name, src_t.assistant_id, src_t.assistant_no, src_t.vip_no, src_t.vip_brand_no, src_t.vip_name, src_t.vip_phone, src_t.wildcard_no, src_t.wildcard_name, src_t.wildcard_discount, src_t.base_score, src_t.pro_score, src_t.cost_score, src_t.order_type, src_t.business_type, src_t.biz_type_code, src_t.biz_type_name, src_t.order_source, src_t.daily_flag, src_t.daily_datetime, src_t.monthly_flag, src_t.monthly_datetime, src_t.balance_no, src_t.remark, src_t.status, src_t.actual_postage, src_t.message_code, src_t.express_company, src_t.bill_transfer_no, src_t.express_no, src_t.logistics_no, src_t.take_mode, src_t.logistics_mode, src_t.market_ticket_no, src_t.lock_flag, src_t.return_exchange_time, src_t.shop_terminal_no, src_t.invoice_apply_no, src_t.invoice_apply_date, src_t.invoice_no, src_t.invoice_amount, src_t.invoice_date, src_t.pickup_date, src_t.zone_yyyymm, src_t.check_user_no, src_t.check_user, src_t.create_user_no, src_t.create_user, src_t.create_time, src_t.update_user_no, src_t.update_user, src_t.update_time, src_t.adjust_flag, src_t.adjust_user, src_t.adjust_time, src_t.adjust_order_reason, src_t.reason_class_name, src_t.reason_class_no, src_t.reason_code, src_t.responsibility_name, src_t.responsibility_no, src_t.responsibility_id, src_t.sharding_flag, src_t.remain_score, src_t.accumulated_score, src_t.notice_user, src_t.notice_time, src_t.notice_flag, src_t.pay_time, src_t.refund_status, src_t.place_date, src_t.reprint, src_t.adjust_inventory_flag, src_t.platform_no, src_t.platform_name, src_t.delivery_time, src_t.delivery_date, src_t.invoice_type, src_t.invoice_unit, src_t.invoice_content, src_t.is_package_mail_flag,from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as ods_update_time,src_t.partition_date</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>update_time</syncTimeColumn>
+  <targetDbId>1</targetDbId>
+  <targetTable>retail_pos_order_main_ods</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+  <selectPreMonth></selectPreMonth>
+  <filterConditions></filterConditions>
+</root>

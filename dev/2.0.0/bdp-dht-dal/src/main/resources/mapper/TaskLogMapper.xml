@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wonhigh.dc.client.dal.mapper.TaskLogMapper">
+	<resultMap id="BaseResultMap" type="cn.wonhigh.dc.client.common.model.TaskLog">
+		<id column="trigger_name" property="triggerName" jdbcType="VARCHAR" />
+		<id column="group_name" property="groupName" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="run_record" property="runRecord" jdbcType="VARCHAR" />
+	</resultMap>
+	<select id="selectByCreateTime" resultMap="BaseResultMap" parameterType="java.util.Date">
+		SELECT trigger_name,group_name,create_time,run_record FROM task_log
+		WHERE trigger_name = #{triggerName} AND group_name = #{groupName} AND create_time &gt; #{createTime}
+	</select>
+	<select id="getTaskStatus" resultType="java.lang.Integer">
+		SELECT sync_status FROM task_status
+		WHERE trigger_name = #{triggerName} AND group_name = #{groupName}
+	</select>
+</mapper>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	   xmlns:aop="http://www.springframework.org/schema/aop" 
+	   xmlns:context="http://www.springframework.org/schema/context" 
+	   xmlns:jee="http://www.springframework.org/schema/jee" 
+	   xmlns:tx="http://www.springframework.org/schema/tx" 
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	   xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd  
+	                      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+	                      http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd         
+	                      http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.1.xsd         
+	                      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.1.xsd">
+	             
+	<!-- 加载系统properties -->
+	<context:property-placeholder location="file:/Users/richmo/work/code-resources/bdp-dht/dev/2.0.0/conf/wonhighconf/dc/client/*.properties" ignore-unresolvable="true" ignore-resource-not-found="true" order="2" system-properties-mode="NEVER"/>
+	<context:property-placeholder location="file:/etc/wonhighconf/dc/client/*.properties" ignore-unresolvable="true" ignore-resource-not-found="true" order="2" system-properties-mode="NEVER"/>
+	
+	<!-- 加载注解功能 -->
+	<aop:aspectj-autoproxy />
+	<context:annotation-config />
+	<tx:annotation-driven order="100"/>
+	
+	<!--<bean id="parentDataSource" class="com.jolbox.bonecp.BoneCPDataSource" destroy-method="close" abstract="true">-->
+		<!--<property name="partitionCount" value="${db.partitionCount}" />-->
+		<!--<property name="maxConnectionsPerPartition" value="${db.maxConnectionsPerPartition}" />-->
+		<!--<property name="minConnectionsPerPartition" value="${db.minConnectionsPerPartition}" />-->
+		<!--<property name="acquireIncrement" value="${db.acquireIncrement}" />-->
+		<!--<property name="poolAvailabilityThreshold" value="${db.poolAvailabilityThreshold}" />-->
+		<!--<property name="connectionTimeoutInMs" value="${db.connectionTimeoutInMs}" />-->
+		<!--<property name="releaseHelperThreads" value="${db.releaseHelperThreads}" />-->
+		<!--<property name="statementReleaseHelperThreads" value="${db.statementReleaseHelperThreads}" />-->
+		<!--<property name="maxConnectionAgeInSeconds" value="${db.maxConnectionAgeInSeconds}" />-->
+		<!--<property name="connectionTestStatement" value="${db.connectionTestStatement}" />-->
+		<!--<property name="idleMaxAgeInSeconds" value="${db.idleMaxAgeInSeconds}" />-->
+		<!--<property name="idleConnectionTestPeriodInSeconds" value="${db.idleConnectionTestPeriodInSeconds}" />-->
+		<!--<property name="acquireRetryAttempts" value="${db.acquireRetryAttempts}" />-->
+		<!--<property name="acquireRetryDelayInMs" value="${db.acquireRetryDelayInMs}" />-->
+		<!--<property name="lazyInit" value="${db.lazyInit}" />-->
+		<!--<property name="disableJMX" value="${db.disableJMX}" />-->
+		<!--<property name="poolName" value="${db.poolName}" />-->
+		<!--<property name="statementsCacheSize" value="${db.statementsCacheSize}" />-->
+		<!--<property name="logStatementsEnabled" value="${db.logStatementsEnabled}" />-->
+		<!--<property name="queryExecuteTimeLimitInMs" value="${db.queryExecuteTimeLimit}" />-->
+	<!--</bean>-->
+
+	<bean id="mysqlDataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="driverClassName" value="${db.driverClass}" />
+		<property name="url" value="${db.url}" />
+		<property name="username" value="${db.username}" />
+		<property name="password" value="${db.password}" />
+
+		<!-- 初始化连接数量 -->
+		<property name="initialSize" value="${hive.initialSize}" />
+		<!-- 最小空闲连接数 -->
+		<property name="minIdle" value="${hive.minIdle}" />
+		<!-- 最大并发连接数 -->
+		<property name="maxActive" value="${hive.max.active}" />
+		<!-- 配置获取连接等待超时的时间 -->
+		<property name="maxWait" value="${hive.maxWait}" />
+
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+		<property name="timeBetweenEvictionRunsMillis" value="${hive.timeBetweenEvictionRunsMillis}" />
+
+		<!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+		<property name="minEvictableIdleTimeMillis" value="${hive.minEvictableIdleTimeMillis}" />
+		<property name="validationQuery" value="${hive.validationQuery}" />
+		<property name="testWhileIdle" value="${hive.testWhileIdle}" />
+		<property name="testOnBorrow" value="${hive.testOnBorrow}" />
+		<property name="testOnReturn" value="${hive.testOnReturn}" />
+
+	</bean>
+	
+	<!--<bean id="postgresqlDataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">-->
+		<!--<property name="driverClassName" value="${postgresql.db.driverClass}" />-->
+		<!--<property name="url" value="${postgresql.db.url}" />-->
+		<!--<property name="username" value="${postgresql.db.username}" />-->
+		<!--<property name="password" value="${postgresql.db.password}" />-->
+
+		<!--&lt;!&ndash; 初始化连接数量 &ndash;&gt;-->
+		<!--<property name="initialSize" value="${hive.initialSize}" />-->
+		<!--&lt;!&ndash; 最小空闲连接数 &ndash;&gt;-->
+		<!--<property name="minIdle" value="${hive.minIdle}" />-->
+		<!--&lt;!&ndash; 最大并发连接数 &ndash;&gt;-->
+		<!--<property name="maxActive" value="${hive.max.active}" />-->
+		<!--&lt;!&ndash; 配置获取连接等待超时的时间 &ndash;&gt;-->
+		<!--<property name="maxWait" value="${hive.maxWait}" />-->
+
+		<!--&lt;!&ndash; 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 &ndash;&gt;-->
+		<!--<property name="timeBetweenEvictionRunsMillis" value="${hive.timeBetweenEvictionRunsMillis}" />-->
+
+		<!--&lt;!&ndash; 配置一个连接在池中最小生存的时间，单位是毫秒 &ndash;&gt;-->
+		<!--<property name="minEvictableIdleTimeMillis" value="${hive.minEvictableIdleTimeMillis}" />-->
+		<!--<property name="validationQuery" value="${hive.validationQuery}" />-->
+		<!--<property name="testWhileIdle" value="${hive.testWhileIdle}" />-->
+		<!--<property name="testOnBorrow" value="${hive.testOnBorrow}" />-->
+		<!--<property name="testOnReturn" value="${hive.testOnReturn}" />-->
+	<!--</bean>-->
+
+
+	<!-- 动态数据源 -->
+ 	<!--<bean id="dynamicDataSource" class="com.yougou.logistics.base.common.utils.DynamicDataSource">-->
+		<!--<property name="defaultTargetDataSource" ref="mysqlDataSource" />-->
+
+		<!--<property name="targetDataSources">-->
+			<!--<map key-type="java.lang.String">-->
+				<!--<entry key="postgresqlDataSource" value-ref="postgresqlDataSource" />-->
+			<!--</map>-->
+		<!--</property>-->
+	<!--</bean>-->
+	<!---->
+	<!--&lt;!&ndash; 事务管理器 &ndash;&gt;-->
+	<!--<bean id="transactionManager"-->
+		<!--class="org.springframework.jdbc.datasource.DataSourceTransactionManager">-->
+		<!--<property name="dataSource" ref="dynamicDataSource"></property>-->
+	<!--</bean>-->
+
+	<!--<bean id="sqlSessionFactoryForLogistics" class="org.mybatis.spring.SqlSessionFactoryBean">-->
+		<!--<property name="configLocation" value="${mybatis.mappers}" />-->
+		<!--<property name="dataSource" ref="dynamicDataSource" />-->
+	<!--</bean>-->
+
+
+	<!-- 事务管理器 -->
+	<bean id="transactionManager"
+		  class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="mysqlDataSource"></property>
+	</bean>
+
+	<bean id="sqlSessionFactoryForLogistics" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="${mybatis.mappers}" />
+		<property name="dataSource" ref="mysqlDataSource" />
+	</bean>
+	
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg index="0" ref="sqlSessionFactoryForLogistics" />
+	</bean>
+  
+    <!-- 声明使用注解式事务 -->
+	<tx:annotation-driven transaction-manager="transactionManager" order="300" />
+	
+	<!-- 扫描本工程bean -->
+	<context:component-scan base-package="cn.wonhigh.dc.client.dal">
+	</context:component-scan>
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="cn.wonhigh.dc.client.dal.mapper" />
+		<property name="sqlSessionTemplateBeanName" value="sqlSessionTemplate"></property>
+	</bean>
+</beans>

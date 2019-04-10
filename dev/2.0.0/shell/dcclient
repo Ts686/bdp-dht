@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+function stop(){
+ echo "stop the hadoop job  for hadoop ................"
+ dcpid=`jps|grep StartMain|awk '{print $1}'`
+ if [ "$dcpid" != "" ]
+  then
+    hadoop job -list |grep hive| awk '{printf $1 ;printf "\n"}'|while read l
+    do
+      echo $l 
+      jobid=`echo $l|grep job|grep -v jobs`
+       if [ "$jobid" != "" ]
+         then
+           echo "kill the job ======$jopid"
+         # `hadoop job -kill $jobid`
+           #echo $jobid
+       fi
+   done
+ fi
+ echo "stop the bdp-dht application ........................"
+ kill -9 $dcpid
+}
+function stophdp(){
+    echo "stop the hadoop job  for hadoop ................"
+    hadoop job -list |grep hive| awk '{printf $1 ;printf "\n"}'|while read l
+    do
+      echo $l 
+      jobid=`echo $l|grep job|grep -v jobs`
+       if [ "$jobid" != "" ]
+         then
+           echo "kill the job ======$jopid"
+         # `hadoop job -kill $jobid`
+           #echo $jobid
+       fi
+   done
+ 
+ 
+}
+
+function print_usage(){
+  echo "Usage: dcclient   COMMAND"
+  echo "   where  COMMAND is one of:"
+  echo "  -stophdp     stop the bdp-dht\'s hadoop job and  the user is hive"
+  echo "  -restart     restart the bdp-dht "
+  echo "  -start       start the bdp-dht "
+  echo "  -showlog     use the tail commend to print the dc logs"
+  echo "  -showerr     print the bdp-dht err log today and yesterday"
+  echo "  -stop        stop the bdp-dht "
+  echo ""  
+}
+
+function start(){
+  echo "starting the bdp-dht ......"
+  nohup /usr/local/wonhigh/dc/client/bdp-dht/bin/start-main.sh > /dev/null &
+  echo "bdp-dht started "
+}
+
+function showlog(){
+   tail -100f /data/logs/wonhigh/dc/client/bdp-dht.log
+}
+function restart(){  
+   stop
+   start
+}
+function showerr(){
+   logdatepre=`date -d "-1 day" +%Y%m%d`
+   logdate=`date +%Y%m%d`
+   flag=0
+   cat -n /data/logs/wonhigh/dc/client/bdp-dht.log|grep -E "$logdate|$logdatepre"|grep Exception |awk '{printf $1;printf "\n"}'| while read l
+   do 
+     let flag=$flag+40
+     if [ $l -gt $flag ]
+      then
+       flag=$l
+       let tmp=$l 
+       cat -n /data/logs/wonhigh/dc/client/bdp-dht.log|tail -n +$tmp|head -n 40
+       echo -e "\n\n\n\n\n\n\n==================================================================================================="
+     fi
+   done
+}
+
+if [ $# = 0 ]; then
+  print_usage
+  exit
+fi
+
+COMMAND=$1
+shift
+
+case $COMMAND in
+  # usage flags
+  --help|-help|-h)
+    print_usage
+    exit
+    ;;
+  -stop)
+   stop
+   exit
+   ;;
+    -stophdp)
+   stop
+   exit
+   ;;
+   -start)
+   start
+   exit
+   ;;
+   -restart|-r)
+   restart
+   exit
+   ;;
+   -showlog|-log)
+   showlog
+   exit
+   ;;
+   -showerr|-errlog)
+   showerr
+   exit
+   ;;
+esac
+ 

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_retail_gms.retail_gms_bill_checkstk_dtl-->
+  <id>903</id>
+  <taskType>120</taskType>
+  <groupName>dc_retail_gms</groupName>
+  <triggerName>bill_checkstk_dtl_cln</triggerName>
+  <sourceDbId>1</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>retail_gms_bill_checkstk_dtl</sourceTable>
+  <dependencyTaskIds>139</dependencyTaskIds>
+  <relationColumns>bill_no</relationColumns>
+  <primaryKeys>id</primaryKeys>
+  <selectColumns/>
+  <specialColumnTypeList/>
+  <syncTimeColumn>create_time,update_time</syncTimeColumn>
+  <targetDbId>0</targetDbId>
+  <targetTable>retail_gms_bill_checkstk_dtl_cln</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>1</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

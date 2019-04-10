@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+
+  <id>19999991</id>
+   
+  <groupName>dc_test_kettle</groupName>  
+  
+  <triggerName>shop_1</triggerName>  
+
+  <sourceDbId>18</sourceDbId>  
+
+  <isAddTemporaryUdf>0</isAddTemporaryUdf>
+  
+  <temporaryUdfName></temporaryUdfName>
+  
+  <temporaryUdfPath></temporaryUdfPath>
+  
+  <temporaryUdfClass></temporaryUdfClass>
+  
+  <dependencyTaskIds></dependencyTaskIds>
+  
+  <schedulTimeparameter>schedul@beginTime,schedul@endTime</schedulTimeparameter>
+  
+  <executeSql>insert into table shop1 values(1,'lisi','jjjj','gggg','schedul@endTime')</executeSql>
+ 
+  <version>1.0</version>
+ 
+</root>

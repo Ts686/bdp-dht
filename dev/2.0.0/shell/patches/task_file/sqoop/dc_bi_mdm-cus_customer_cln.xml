@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm.bi_mdm_cus_customer-->
+  <id>954</id>
+  <taskType>120</taskType>
+  <groupName>dc_bi_mdm</groupName>
+  <triggerName>cus_customer_cln</triggerName>
+  <sourceDbId>1</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>bi_mdm_cus_customer</sourceTable>
+  <dependencyTaskIds>827</dependencyTaskIds>
+  <relationColumns>customer_no</relationColumns>
+  <primaryKeys>id</primaryKeys>
+  <selectColumns/>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>0</targetDbId>
+  <targetTable>bi_mdm_cus_customer_cln</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>1</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

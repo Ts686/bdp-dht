@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm.bi_mdm_sup_supplier-->
+  <id>990</id>
+  <taskType>120</taskType>
+  <groupName>dc_bi_mdm</groupName>
+  <triggerName>sup_supplier_cln</triggerName>
+  <sourceDbId>1</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>bi_mdm_sup_supplier</sourceTable>
+  <dependencyTaskIds>884</dependencyTaskIds>
+  <relationColumns>supplier_no</relationColumns>
+  <primaryKeys>id</primaryKeys>
+  <selectColumns/>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>0</targetDbId>
+  <targetTable>bi_mdm_sup_supplier_cln</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm.org_storage-->
+  <id>845</id>
+  <taskType>100</taskType>
+  <groupName>dc_bi_mdm</groupName>
+  <triggerName>org_storage</triggerName>
+  <sourceDbId>11</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>org_storage</sourceTable>
+  <dependencyTaskIds/>
+  <relationColumns>storage_no</relationColumns>
+  <primaryKeys>storage_no</primaryKeys>
+  <selectColumns>storage_id,storage_no,storage_code,storage_name,province_no,city_no,county_no,region_no,business_city_no,audit_status,storage_status,storage_type,storage_level,area_total,contact,telno,mobile,address,editor,edittm,createtm,edit_flag,remarks,ifnull(edittm:createtm) as yw_update_time</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>1</targetDbId>
+  <targetTable>bi_mdm_org_storage</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+  <filterConditions>and t.storage_status not in(0)</filterConditions>
+</root>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm.org_store_channel-->
+  <id>853</id>
+  <taskType>100</taskType>
+  <groupName>dc_bi_mdm</groupName>
+  <triggerName>org_store_channel</triggerName>
+  <sourceDbId>11</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>org_store_channel</sourceTable>
+  <dependencyTaskIds/>
+  <relationColumns>store_channel_id</relationColumns>
+  <primaryKeys>store_channel_id</primaryKeys>
+  <selectColumns>store_channel_id,store_channel_no,store_channel_name,parent_store_channe_id,store_channel_level,store_channel_path,order_no,editor,edittm,createtm,edit_flag,remarks,ifnull(edittm:createtm) as yw_update_time</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>1</targetDbId>
+  <targetTable>bi_mdm_org_store_channel</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>1</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

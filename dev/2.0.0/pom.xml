@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>cn.wonhigh.dc.client</groupId>
+	<artifactId>bdp-dht</artifactId>
+	<version>2.0.0</version>
+	<packaging>pom</packaging>
+	<name>bdp-dht</name>
+	<url>http://maven.apache.org</url>
+	<description>scheduler client in data center</description>
+	<modules>
+		<module>bdp-dht-common</module>
+		<module>bdp-dht-dal</module>
+		<module>bdp-dht-service</module>
+		<module>bdp-dht-zmanager</module>
+		<module>bdp-dht-sqoop</module>
+	</modules>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<spring.version>3.1.4.RELEASE</spring.version>
+		<base.version>1.1.0-RELEASE</base.version>
+		<hive.version>1.2.1</hive.version>
+		<!--<hive.version>2.1.1</hive.version>-->
+	</properties>
+	<distributionManagement>
+		<repository>
+			<id>releases</id>
+			<name>Yougou Releases</name>
+			<url>http://m2repo.wonhigh.cn:8081/nexus/content/repositories/releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>Yougou Snapshots</name>
+			<url>http://m2repo.wonhigh.cn:8081/nexus/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>${spring.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.4</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+      <version>4.4</version>
+    </dependency>
+  </dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-source-plugin</artifactId> 
+				<version>2.1.2</version> <executions> <execution> <id>attach-sources</id> 
+				<phase>verify</phase> <goals> <goal>jar-no-fork</goal> </goals> </execution> 
+				</executions> </plugin> -->
+		</plugins>
+	</build>
+</project>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm.org_store-->
+  <id>847</id>
+  <taskType>100</taskType>
+  <groupName>dc_bi_mdm</groupName>
+  <triggerName>org_store</triggerName>
+  <sourceDbId>11</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>org_store</sourceTable>
+  <dependencyTaskIds/>
+  <relationColumns>store_no</relationColumns>
+  <primaryKeys>store_no</primaryKeys>
+  <selectColumns>store_id,store_no,store_code,store_lcode,store_nm,store_attribute_no1,store_attribute_no2,store_attribute_no3,province_no,city_no,county_no,store_channel_no1,store_channel_no2,store_channel_no3,business_city_no,category_code_no,location_no,main_brand_detail_no,secondary_brand_detail_no,area_total,business_area,opendt,closedt,store_level,digits,calculation_method,pricing_level,pay_type,mall_no,business_circle_no,part_area_no,staff_number,floor_number,settlement_company_no,cman_address,telno,contact,mobile_phone,audit_status,store_status,store_type,online_flag,store_mode_no,editor,edittm,createtm,edit_flag,remarks,ifnull(edittm:createtm) as yw_update_time</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>1</targetDbId>
+  <targetTable>bi_mdm_org_store</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+  <filterConditions>and t.store_status not in(0)</filterConditions>
+</root>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm_hive.bi_mdm_org_organ_business_group_cln-->
+  <id>1066</id>
+  <taskType>200</taskType>
+  <groupName>dc_bi_mdm_hive</groupName>
+  <triggerName>org_organ_business_group</triggerName>
+  <sourceDbId>1</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>bi_mdm_org_organ_business_group_cln</sourceTable>
+  <dependencyTaskIds>959</dependencyTaskIds>
+  <relationColumns>business_group_no</relationColumns>
+  <primaryKeys>business_group_no</primaryKeys>
+  <selectColumns>business_group_id,business_group_no,business_group_name,order_no,status,editor,edittm,createtm,edit_flag,remarks</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>4</targetDbId>
+  <targetTable>bi_mdm_org_organ_business_group</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>1</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

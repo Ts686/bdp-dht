@@ -1,0 +1,162 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>bdp-dht</artifactId>
+        <groupId>cn.wonhigh.dc.client</groupId>
+        <version>2.0.0</version>
+    </parent>
+    <groupId>${project.parent.groupId}</groupId>
+    <artifactId>bdp-dht-sqoop</artifactId>
+    <version>${project.parent.version}</version>
+    <name>bdp-dht-sqoop</name>
+    <url>http://maven.apache.org</url>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.wonhigh</groupId>
+            <artifactId>base-framework-manager</artifactId>
+            <version>${base.version}</version>
+        </dependency>
+        <!-- needs to put this on top to make sure org.apache.hadoop.mapreduce.protocol.ClientProtocolProvider using yarn version -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+            <version>2.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-api</artifactId>
+            <version>2.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-common</artifactId>
+            <version>2.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-client</artifactId>
+            <version>2.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-server-web-proxy</artifactId>
+            <version>2.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>2.6.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-mapreduce-client-shuffle</artifactId>
+            <version>2.6.2</version>
+        </dependency>
+
+        <!--<dependency>-->
+        <!--<groupId>org.apache.hadoop</groupId>-->
+        <!--<artifactId>hadoop-mapreduce-client-common</artifactId>-->
+        <!--<version>2.5.0</version>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+        <!--<groupId>cn.wonhigh</groupId>-->
+        <!--<artifactId>sqoop</artifactId>-->
+        <!--<version>1.5.0-RELEASE</version>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+            <!--<groupId>cn.wonhigh</groupId>-->
+            <!--<artifactId>sqoop</artifactId>-->
+            <!--<version>1.6.1-RELEASE</version>-->
+        <!--</dependency>-->
+        <dependency>
+            <groupId>cn.wonhigh</groupId>
+            <artifactId>sqoop</artifactId>
+            <!--<version>1.2.3</version>-->
+            <version>1.6.1-RELEASE</version>
+        </dependency>
+
+
+        <!-- This is to decouple from HIVE installation,
+         Since hive should pick up configurations from classpath,
+         they are designed here to be stored in /etc/wonhighconf/dc/hadoop/
+         and need to export this env var as follows:
+         vi /etc/profile
+         export CLASSPATH_PREFIX=$CLASSPATH_PREFIX:/etc/wonhighconf/dc/hadoop/
+        -->
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-common</artifactId>
+            <version>${hive.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-exec</artifactId>
+            <version>${hive.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-cli</artifactId>
+            <version>${hive.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.31</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>repo1.maven.org</id>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
+    </repositories>
+
+    <build>
+        <!--<resources>-->
+        <!--<resource>-->
+        <!--<directory>src/main/resources</directory>-->
+        <!--</resource>-->
+        <!--</resources>-->
+        <plugins>
+            <!--<plugin>-->
+            <!--<artifactId>maven-assembly-plugin</artifactId>-->
+            <!--<version>2.2.1</version>-->
+            <!--<configuration>-->
+            <!--<descriptorRefs>-->
+            <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
+            <!--</descriptorRefs>-->
+            <!--</configuration>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<id>make-assembly</id> &lt;!&ndash; this is used for inheritance merges &ndash;&gt;-->
+            <!--<phase>package</phase> &lt;!&ndash; bind to the packaging phase &ndash;&gt;-->
+            <!--<goals>-->
+            <!--<goal>single</goal>-->
+            <!--</goals>-->
+            <!--</execution>-->
+            <!--</executions>-->
+            <!--</plugin>-->
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm.pro_category-->
+  <id>873</id>
+  <taskType>100</taskType>
+  <groupName>dc_bi_mdm</groupName>
+  <triggerName>pro_category</triggerName>
+  <sourceDbId>11</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>pro_category</sourceTable>
+  <dependencyTaskIds/>
+  <relationColumns>category_id</relationColumns>
+  <primaryKeys>category_id</primaryKeys>
+  <selectColumns>category_id,category_no,category_name,special_code,parent_category_id,category_level,category_path,affiliation,min_node_flag,order_no,status,editor,edittm,createtm,edit_flag,remarks,ifnull(edittm:createtm) as yw_update_time</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>1</targetDbId>
+  <targetTable>bi_mdm_pro_category</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>1</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

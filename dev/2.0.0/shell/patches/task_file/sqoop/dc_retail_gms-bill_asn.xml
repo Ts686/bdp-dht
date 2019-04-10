@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_retail_gms.bill_asn-->
+  <id>131</id>
+  <taskType>100</taskType>
+  <groupName>dc_retail_gms</groupName>
+  <triggerName>bill_asn</triggerName>
+  <sourceDbId>6</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>bill_asn</sourceTable>
+  <dependencyTaskIds/>
+  <relationColumns>bill_no</relationColumns>
+  <primaryKeys>id</primaryKeys>
+  <selectColumns>id,bill_no,bill_type,status,biz_type,ref_bill_no,ref_bill_type,company_no,order_unit_no,order_unit_name,sys_no,supplier_no,supplier_name,store_no,store_name,order_no,contract_no,invoice_no,send_out_date,tax_rate,merchandiser,create_user,create_time,auditor,audit_time,remark,update_time,trans_no,send_detail_total,zone_yyyymm,ifnull(update_time:create_time) as yw_update_time</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>create_time,update_time</syncTimeColumn>
+  <targetDbId>1</targetDbId>
+  <targetTable>retail_gms_bill_asn</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+  <filterConditions>and t.status not in(0)</filterConditions>
+</root>

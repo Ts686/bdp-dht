@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_retail_fas_hive.retail_fas_rate_pro_cln-->
+  <id>1059</id>
+  <taskType>200</taskType>
+  <groupName>dc_retail_fas_hive</groupName>
+  <triggerName>rate_pro</triggerName>
+  <sourceDbId>1</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>retail_fas_rate_pro_cln</sourceTable>
+  <dependencyTaskIds>952</dependencyTaskIds>
+  <relationColumns>id</relationColumns>
+  <primaryKeys>id</primaryKeys>
+  <selectColumns>id,activity_no,activity_name,activity_describe,launch_type,activity_type,activity_bill_type,zone_no,zone_name,mall_no,mall_name,shop_no,shop_name,brand_no,brand_name,start_date,end_date,rate,rate_code,rate_name,basic_rate_flag,debited_mode,payment_mode,settlement_date,billing_code,virtual_flag,properties,full_value,deduction_value,discount,strength,pro_no,status,create_user_no,create_user,create_time,update_user_no,update_user,update_time,audit_no,auditor,audit_time,remark</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>create_time,update_time</syncTimeColumn>
+  <targetDbId>4</targetDbId>
+  <targetTable>retail_fas_rate_pro</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>

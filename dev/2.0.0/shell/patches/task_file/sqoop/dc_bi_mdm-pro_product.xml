@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <!--This is a config of dc_bi_mdm.pro_product-->
+  <id>876</id>
+  <taskType>100</taskType>
+  <groupName>dc_bi_mdm</groupName>
+  <triggerName>pro_product</triggerName>
+  <sourceDbId>11</sourceDbId>
+  <sourceParentTableId/>
+  <sourceTable>pro_product</sourceTable>
+  <dependencyTaskIds/>
+  <relationColumns>product_no</relationColumns>
+  <primaryKeys>product_no</primaryKeys>
+  <selectColumns>product_id,product_no,product_code,product_code2,plate_code,temporary_product_code,product_name,product_lname,product_ename,product_status,brand_no,brand_detail_no,categories_no,style,listing_date,pattern,styleno,factory_product,factory_product_cname,factory_product_ename,vamp_material,main_color,outer_pad,outer_bottom,supplier_no,gender_no,product_year_no,season_no,product_season_no,heel_type_no,end_type_no,order_style_no,lining_no,main_mtrl_no,color_no,size_type_no,search_code,order_no,editor,edittm,createtm,edit_flag,remarks,ifnull(edittm:createtm) as yw_update_time</selectColumns>
+  <specialColumnTypeList/>
+  <syncTimeColumn>createtm,edittm</syncTimeColumn>
+  <targetDbId>1</targetDbId>
+  <targetTable>bi_mdm_pro_product</targetTable>
+  <targetColumns/>
+  <syncFreqSeconds>3600</syncFreqSeconds>
+  <useSqlFlag>0</useSqlFlag>
+  <isSlaveTable>0</isSlaveTable>
+  <isOverwrite>0</isOverwrite>
+  <isPhysicalDel>0</isPhysicalDel>
+  <version>1.0</version>
+  <subTaskList/>
+</root>
