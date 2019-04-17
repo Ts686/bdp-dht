@@ -1,18 +1,26 @@
 package cn.wonhigh.dc.client.common.constans;
 
+import cn.wonhigh.dc.client.common.util.PropertyFile;
+
+import java.util.Properties;
+
 /**
  * 消息属性名相关的常量类
  *
  * @author wang.w
  */
 public class MessageConstant {
+    static Properties properties = null;
 
+    static {
+        properties = PropertyFile.getProps("");
+    }
 
     /**
      * 属性文件存放在linux上的路径
      */
-//    public static final String LINUX_PATH = "/etc/wonhighconf/dc/client/";
-    public static final String LINUX_PATH = "/Users/richmo/work/code-resources/bdp-dht/conf/wonhighconf/dc/client/";
+    public static final String LINUX_PATH = "/etc/wonhighconf/dc/client/";
+//    public static final String LINUX_PATH = "/Users/richmo/work/svn-resources/dc-client/Dev/branches/dc-client-1.18.0/conf/wonhighconf/dc/client/";
 
 
     /**
@@ -23,7 +31,7 @@ public class MessageConstant {
     /**
      * 属性文件名
      */
-    public static final String PROP_FILE_NAME = "bdp-dht.properties";
+    public static final String PROP_FILE_NAME = "dc-client.properties";
 
     public static final String LOG4J_PROPERTIES_DIR = "log4j.properties.path";
 
@@ -97,7 +105,7 @@ public class MessageConstant {
     /**
      * DEBUG 开关
      */
-    public static final String DEBUG = "bdp-dht.debug";
+    public static final String DEBUG = "dc-client.debug";
 
     /**
      * 用户密码
@@ -152,11 +160,13 @@ public class MessageConstant {
     /**
      * 消息发送队列
      */
-    public static final String DC_SCHEDULER_JOB_QUEUE = "cn.belle.retail.scheduler.jobExecStateConsumer.queue.cdh";
+//    public static final String DC_SCHEDULER_JOB_QUEUE = "cn.belle.retail.scheduler.jobExecStateConsumer.queue.cdh";
+    public static final String DC_SCHEDULER_JOB_QUEUE = (String) properties.get("dc.scheduler.job.queue");
     /**
      * 消息发送队列
      */
-    public static final String DC_SCHEDULER_TRIGGERMSG_QUEUE = "cn.belle.retail.scheduler.TriggersMsgConsumer.queue.cdh";
+//    public static final String DC_SCHEDULER_TRIGGERMSG_QUEUE = "cn.belle.retail.scheduler.TriggersMsgConsumer.queue.cdh";
+    public static final String DC_SCHEDULER_TRIGGERMSG_QUEUE = (String) properties.get("dc.scheduler.triggermsg.queue");
     /**
      * Hive kerberos principal
      */
@@ -275,6 +285,7 @@ public class MessageConstant {
     /**
      * 免密登录服务器私钥地址
      */
-    public static final String DC_CLIENT_PRIVATE_KEY_PATH="~/.ssh/id_rsa";
+    public static final String DC_CLIENT_PRIVATE_KEY_PATH = "~/.ssh/id_rsa";
+    public static final String OVERWIRTE_HEARTBEAT_FIRST = "overwirte.heartbeat.first.time";
 
 }

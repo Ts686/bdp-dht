@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -149,7 +150,9 @@ public class SynchronousRedisCacheTaskImpl implements RemoteJobServiceExtWithPar
             try {
                 logger.info("---------------------更新redis中任务及数据库信息---------------------");
                 logger.info(String.format("【当前任务个数%s个,数据库信息%s个】", ParseXMLFileUtil.getCacheTaskEntitiesKeys().size(), ParseXMLFileUtil.getCacheDbEntities().size()));
-                ParseXMLFileUtil.initTaskByRedis();
+                jobBizStatusEnum = JobBizStatusEnum.RUNNING;
+                SendMsg2AMQ.updateStatusAndSend(jobId, jobBizStatusEnum, jmsClusterMgr);
+                ParseXMLFileUtil.initTaskByRedis(new Properties());
                 logger.info("---------------------更新完成---------------------");
                 logger.info(String.format("【任务个数%s个,数据库信息%s个】", ParseXMLFileUtil.getCacheTaskEntitiesKeys().size(), ParseXMLFileUtil.getCacheDbEntities().size()));
                 jobBizStatusEnum = JobBizStatusEnum.FINISHED;
@@ -159,7 +162,7 @@ public class SynchronousRedisCacheTaskImpl implements RemoteJobServiceExtWithPar
                 RinseStatusAndLogCache.removeTaskByJobId(jobId);
             } catch (Exception e) {
                 String message = String.format("【同步redis任务xml异常】", taskName);
-                logger.error(message);
+                logger.error(message, e);
                 jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                 // 任务状态日志入库
                 addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, message);

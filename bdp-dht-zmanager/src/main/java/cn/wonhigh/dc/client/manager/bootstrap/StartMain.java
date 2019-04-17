@@ -56,7 +56,7 @@ public class StartMain {
 //            ParseXMLFileUtil.initTask();
             logger.info("---------------------更新redis中任务及数据库信息---------------------");
             logger.info(String.format("【当前任务个数%s个,数据库信息%s个】", ParseXMLFileUtil.getCacheTaskEntitiesKeys().size(), ParseXMLFileUtil.getCacheDbEntities().size()));
-            ParseXMLFileUtil.initTaskByRedis();
+            ParseXMLFileUtil.initTaskByRedis(properties);
             logger.info("---------------------更新完成---------------------");
             logger.info(String.format("【redis加载完成:任务个数%s个,数据库信息%s个】", ParseXMLFileUtil.getCacheTaskEntitiesKeys().size(), ParseXMLFileUtil.getCacheDbEntities().size()));
 //            ParseProXMLFileUtil.initTask();

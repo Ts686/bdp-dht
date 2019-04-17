@@ -5,6 +5,7 @@ import cn.wonhigh.dc.client.common.model.TaskDatabaseConfig;
 import cn.wonhigh.dc.client.common.model.TaskPropertiesConfig;
 import cn.wonhigh.dc.client.common.util.redis.JedisUtils;
 import com.yougou.logistics.base.common.exception.ManagerException;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
@@ -32,6 +33,27 @@ public class ParseXMLFileUtil {
     private static final Logger logger = Logger.getLogger(ParseXMLFileUtil.class);
     //缓存任务基本信息
     private static ConcurrentMap<String, TaskPropertiesConfig> cacheTaskEntities = new ConcurrentHashMap<String, TaskPropertiesConfig>();
+
+    public static ConcurrentMap<String, String> getOverwriteInfos() {
+        //取出最近一次缓存
+        if (overwriteInfos.isEmpty()) {
+            Map<String, String> lastRedisMap = JedisUtils.getMap("TASK_OVERWRITE_INFO");
+            if (null != lastRedisMap && !lastRedisMap.isEmpty()) {
+                for (Map.Entry<String, String> entry : lastRedisMap.entrySet()) {
+                    overwriteInfos.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+        return overwriteInfos;
+    }
+
+    private static ConcurrentMap<String, String> overwriteInfos = new ConcurrentHashMap<String, String>();
+
+    public static ConcurrentMap<String, String> getSyncOverwriteInfo() {
+        return syncOverwriteInfo;
+    }
+
+    private static ConcurrentMap<String, String> syncOverwriteInfo = new ConcurrentHashMap<String, String>();
 
     public static ConcurrentMap<String, String> histroyTables = new ConcurrentHashMap<String, String>();
 
@@ -83,7 +105,7 @@ public class ParseXMLFileUtil {
                         for (Integer id : taskConfig.getDependencyTaskIds()) {
                             TaskPropertiesConfig tmp = getTaskConfig(id);
                             if (tmp == null) {
-                                logger.error("获取依赖的id出错  没有取到id  id:" + id);
+//                                logger.error("获取依赖的id出错  没有取到id  id:" + id);
                             } else {
                                 tList.add(tmp);
                             }
@@ -189,7 +211,7 @@ public class ParseXMLFileUtil {
                     for (Integer id : task.getDependencyTaskIds()) {
                         TaskPropertiesConfig tmp = getTaskConfig(id);
                         if (tmp == null) {
-                            logger.error("获取依赖的id出错  没有取到id  id:" + id);
+//                            logger.error("获取依赖的id出错  没有取到id  id:" + id);
                         } else {
                             // 当从表的时间戳字段为空时，使用主表的时间戳字段
                             //							if (tmp.getSyncTimeColumn() == null  ) {
@@ -435,6 +457,8 @@ public class ParseXMLFileUtil {
             taskConfig.setIsOverwrite(root.element("isOverwrite") != null
                     && StringUtils.isNotBlank(root.element("isOverwrite").getText()) ? Integer.parseInt(root.element(
                     "isOverwrite").getText()) : null);
+            //如果不是首次，对比新旧
+            modifyBeatInfo(taskConfig);
             taskConfig.setIsPhysicalDel(root.element("isPhysicalDel") != null
                     && StringUtils.isNotBlank(root.element("isPhysicalDel").getText()) ? Integer.parseInt(root.element(
                     "isPhysicalDel").getText()) : null);
@@ -513,10 +537,34 @@ public class ParseXMLFileUtil {
                 taskConfig.setTaskContent(contentMap);
             }
             cacheTaskEntities.put(taskConfig.getGroupName() + SPLITE_CHAR_4 + taskConfig.getTriggerName(), taskConfig);
-//            System.out.println(cacheTaskEntities.size());
+            if (PropertyFile.getProps("").get(MessageConstant.OVERWIRTE_HEARTBEAT_FIRST).equals("true")) {
+                overwriteInfos.put(taskConfig.getGroupName() + SPLITE_CHAR_4 + taskConfig.getTriggerName(), String.valueOf(taskConfig.getIsOverwrite()));
+            }
         } catch (Exception e) {
             logger.error(String.format("解析失败...%s", taskConfig.getGroupName() + taskConfig.getTriggerName()) + taskConfig.getId() + "--->" + file, e);
             throw new ManagerException("加载task的xml配置出错：", e);
+        }
+    }
+
+    private static void modifyBeatInfo(TaskPropertiesConfig taskConfig) {
+        String isStart = PropertyFile.getProps("").getProperty(MessageConstant.OVERWIRTE_HEARTBEAT_FIRST);
+        if (isStart.equalsIgnoreCase("true")) { //如果是首次，直接返回
+            return;
+        }
+        Integer newInfo = taskConfig.getIsOverwrite();
+        String groupName = taskConfig.getGroupName();
+        String triggerName = taskConfig.getTriggerName();
+        String oldInfo = ParseXMLFileUtil.getOverwriteInfos().get(groupName + SPLITE_CHAR_4 + triggerName);
+        //如果运行中修改
+        if (isStart.equalsIgnoreCase("false")
+                && null != newInfo && null != oldInfo) {
+            //如果不相等缓存准备心跳
+            if (!oldInfo.equalsIgnoreCase(String.valueOf(newInfo))) {
+                logger.info(String.format("groupName=【%s】,taskName=【%s】更新增全量信息;" +
+                        "OLD=【%s】,NEW=【%s】", groupName, triggerName, oldInfo, String.valueOf(newInfo)));
+                syncOverwriteInfo.put(groupName + SPLITE_CHAR_4 + triggerName, String.valueOf(newInfo));
+                overwriteInfos.put(taskConfig.getGroupName() + SPLITE_CHAR_4 + taskConfig.getTriggerName(), String.valueOf(newInfo));
+            }
         }
     }
 
@@ -1203,7 +1251,7 @@ public class ParseXMLFileUtil {
     /**
      * 初始化解析任务的xml
      */
-    public static void initTaskByRedis() throws IOException {
+    public static void initTaskByRedis(Properties properties) throws IOException {
         logger.info("加载redis......");
         //cacheTaskEntities.clear();
         Set<String> dbConfigKeys = JedisUtils.keys("BDP_MDM_DB_CONFIG*");
@@ -1240,7 +1288,7 @@ public class ParseXMLFileUtil {
                 for (Integer id : task.getDependencyTaskIds()) {
                     TaskPropertiesConfig tmp = getTaskConfig(id);
                     if (tmp == null) {
-                        logger.error("获取依赖的id出错  没有取到id  id:" + id);
+//                        logger.error("获取依赖的id出错  没有取到id  id:" + id);
                     } else {
                         tList.add(tmp);
                     }
@@ -1251,6 +1299,11 @@ public class ParseXMLFileUtil {
         }
         // 保证一致性
         syncTaskCache();
+        //如果是启动，就全部发送一次
+        if ("true".equalsIgnoreCase((String) properties.get(MessageConstant.OVERWIRTE_HEARTBEAT_FIRST))) {
+            JedisUtils.setMap("TASK_OVERWRITE_INFO", overwriteInfos, 0);
+            logger.info("首次更新redis任务增全量信息完成...");
+        }
     }
 
     private static void handlePipeline(List<Object> datas) {
