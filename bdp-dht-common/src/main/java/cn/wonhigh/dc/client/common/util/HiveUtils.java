@@ -38,7 +38,6 @@ public class HiveUtils {
     public static DruidDataSource dataSourceOds;
 
 
-
     static {
         //初始化hive的durid线程池
         properties = PropertyFile.getProps("");
@@ -69,13 +68,13 @@ public class HiveUtils {
     }
 
 
-
     /**
      * 从druid连接池中获取对应连接
+     *
      * @param dataSource
      * @return
      */
-    public static Connection getConnectionFromDruid(DruidDataSource dataSource){
+    public static Connection getConnectionFromDruid(DruidDataSource dataSource) {
 
         Connection connection = null;
 
@@ -108,6 +107,7 @@ public class HiveUtils {
     /**
      * 重载获取hive连接池
      * 可动态获取hive库连接池信息
+     *
      * @param dbName
      * @param url
      * @param user
@@ -116,19 +116,19 @@ public class HiveUtils {
      * @return
      * @throws SQLException
      */
-    public static Connection getConn(String dbName,String url, String user, String passwd, Integer jdbcTimeout) throws SQLException {
+    public static Connection getConn(String dbName, String url, String user, String passwd, Integer jdbcTimeout) throws SQLException {
         logger.info("获取Hive JDBC连接信息: " + url);
         // DriverManager.setLoginTimeout(jdbcTimeout);
 
         Connection connectionFromDruid = null;
         //根据数据库名称动态选择连接池
-        if("dc_src".equalsIgnoreCase(dbName)){
+        if ("dc_src".equalsIgnoreCase(dbName)) {
             connectionFromDruid = getConnectionFromDruid(dataSourceSrc);
-        }else if("dc_ods".equalsIgnoreCase(dbName)){
+        } else if ("dc_ods".equalsIgnoreCase(dbName)) {
             connectionFromDruid = getConnectionFromDruid(dataSourceOds);
         }
 
-        if(null !=  connectionFromDruid){
+        if (null != connectionFromDruid) {
             logger.info("从druid连接池中获取hive连接成功");
             return connectionFromDruid;
         }
@@ -142,6 +142,7 @@ public class HiveUtils {
 
     /**
      * 获取当个hive数据库连接
+     *
      * @param url
      * @param user
      * @param passwd
@@ -191,7 +192,7 @@ public class HiveUtils {
             syncEndTimeStr = String.valueOf(getHivePartitionValue(endTime));
         }
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getTargetDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getTargetDbEntity().getConnectionUrl(),
                     taskConfig.getTargetDbEntity().getUserName(), taskConfig.getTargetDbEntity().getPassword(),
                     jdbcTimeOut);
 
@@ -316,7 +317,7 @@ public class HiveUtils {
         Connection conn = null;
         String fullTable = tableName + HiveDefinePartNameEnum.CLN_TABLE_NAME_SUBFIX.getValue();// 全量表
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getDbName()taskConfig.getSourceDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeOut);
 
@@ -356,7 +357,7 @@ public class HiveUtils {
         String fullTable = "";
 
         // fullTable += HiveDefinePartNameEnum.DB_NAME_ODS.getValue();
-        conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getTargetDbEntity().getConnectionUrl(), taskConfig.getTargetDbEntity().getUserName(),
+        conn = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getTargetDbEntity().getConnectionUrl(), taskConfig.getTargetDbEntity().getUserName(),
                 taskConfig.getTargetDbEntity().getPassword(), jdbcTimeOut);
         logger.debug("URL:" + taskConfig.getTargetDbEntity().getConnectionUrl() + " userName:"
                 + taskConfig.getTargetDbEntity().getUserName() + " passWd:"
@@ -376,6 +377,11 @@ public class HiveUtils {
             executeHiveStatementAndClose(truncateFullTableStatement);
             logger.info(String.format("Truncate 全量去重表【%s】成功", fullTable));
 
+            //同步元数据到Impala Catalog
+            HiveUtils.syncMetaData4Impala(truncateFullTableSql.toString()
+                    , taskConfig.getTargetDbEntity().getDbName(),
+                    taskConfig.getTargetTable());
+
             StringBuilder createFullTableSql = new StringBuilder("insert into table ");
             createFullTableSql.append(fullTable);
             if (taskConfig.getSyncType().equals(SyncTypeEnum.SYNC_TYPE_1.getValue())) {
@@ -394,6 +400,12 @@ public class HiveUtils {
             logger.info(String.format("开始向全量表【%s】插入数据，详细sql语句：【%s】", fullTable, createFullTableSql));
             PreparedStatement createFullTableStatement = conn.prepareStatement(createFullTableSql.toString());
             executeHiveStatementAndClose(createFullTableStatement);
+
+            //同步元数据到Impala Catalog
+            HiveUtils.syncMetaData4Impala(createFullTableSql.toString()
+                    , taskConfig.getTargetDbEntity().getDbName(),
+                    taskConfig.getTargetTable());
+
             logger.info(String.format("插入全量表【%s】成功", fullTable));
 
         } catch (Exception e) {
@@ -451,7 +463,7 @@ public class HiveUtils {
         Connection sourceConn = null;
 
         try {
-            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
+            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             setHadoopParams(globleHadoopParams, taskConfig, sourceConn, jobName);
@@ -617,7 +629,7 @@ public class HiveUtils {
         Connection sourceConn = null;
 
         try {
-            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
+            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             setHadoopParams(globleHadoopParams, taskConfig, sourceConn, jobName);
@@ -690,7 +702,10 @@ public class HiveUtils {
             PreparedStatement hqlStatement = sourceConn.prepareStatement(hql.toString());
 
             executeHiveStatementAndClose(hqlStatement);
-
+            //同步元数据到Impala Catalog
+            HiveUtils.syncMetaData4Impala(hql.toString()
+                    , taskConfig.getTargetDbEntity().getDbName(),
+                    taskConfig.getTargetTable());
             logger.info(String.format("----ODS表【%s】清洗完成！", targetTableName));
 
         } catch (Throwable e) {
@@ -737,7 +752,7 @@ public class HiveUtils {
                     taskConfig.getGroupName(), taskConfig.getTriggerName());
             logger.info(message);
 
-            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             if (conn == null) {
@@ -784,7 +799,10 @@ public class HiveUtils {
                     selectPreMonth, cleandDataMonth, lastestSeqValue, maxSeqNo));
 
             executeHiveStatementAndClose(delDataStatement);
-
+            //同步元数据到Impala Catalog
+            HiveUtils.syncMetaData4Impala(delSqlStr
+                    , taskConfig.getTargetDbEntity().getDbName(),
+                    taskConfig.getTargetTable());
             message = String.format("删除增量数据 成功！ 【groupName：%s】【triggerName：%s】", taskConfig.getGroupName(),
                     taskConfig.getTriggerName());
             logger.info(message);
@@ -823,7 +841,10 @@ public class HiveUtils {
             logger.info(message);
 
             executeHiveStatementAndClose(insertDataStatement);
-
+            //同步元数据到Impala Catalog
+            HiveUtils.syncMetaData4Impala(insertOdsSql
+                    , taskConfig.getTargetDbEntity().getDbName(),
+                    taskConfig.getTargetTable());
             message = String.format("插入增量数据 成功！ 【groupName：%s】【triggerName：%s】", taskConfig.getGroupName(),
                     taskConfig.getTriggerName());
             logger.info(message);
@@ -872,7 +893,7 @@ public class HiveUtils {
         Connection con = null;
         Statement stmt = null;
         try {
-            con = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
+            con = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(), 30);
             stmt = con.createStatement();
 
@@ -1053,7 +1074,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(), dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
             // String groupName = taskConfig.getGroupName();
             // if (!groupName.equals("gtp_kettle")) {// gtp_kettle组名的任务不设置
             setHadoopParams(globleHadoopParams, taskConfig, conn);
@@ -1362,7 +1383,7 @@ public class HiveUtils {
         String timeSubixStr = formatter.format(new Date());
         String bakTable = fullTable + "_del_bak" + timeSubixStr;
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(), 30);
 
             // 1.创建临时表和备份表，如果不存在
@@ -1472,7 +1493,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(), dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
             // conn = getConn1(); //得到数据连接
             stmt = conn.createStatement();
             boolean rs = stmt.execute(sql); // 执行sql结果
@@ -1493,7 +1514,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(), dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
             // conn = getConn1(); //得到数据连接
             stmt = conn.createStatement();
             int rs = stmt.executeUpdate(sql); // 执行sql结果
@@ -1586,7 +1607,7 @@ public class HiveUtils {
         Connection sourceConn = null;
 
         try {
-            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
+            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             setHadoopParams(globleHadoopParams, taskConfig, sourceConn);
@@ -1830,7 +1851,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(), dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
             // String groupName = taskConfig.getGroupName();
             // if (!groupName.equals("gtp_kettle")) {// gtp_kettle组名的任务不设置
             setHadoopParams(globleHadoopParams, taskConfig, conn, remoteJobInvokeParamsDto, jobId);
@@ -1968,7 +1989,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(), dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
             // String groupName = taskConfig.getGroupName();
             // if (!groupName.equals("gtp_kettle")) {// gtp_kettle组名的任务不设置
             setHadoopParams(globleHadoopParams, taskConfig, conn, jobName);
@@ -2094,5 +2115,53 @@ public class HiveUtils {
             }
         }
 
+    }
+
+    /**
+     * 同步Imapla元数据到impala catalog
+     *
+     * @param imapalaUrl
+     * @param imapalaSql
+     * @param rawSql
+     */
+    public static void syncMetaData4Impala(String rawSql, String dbName, String tableName) {
+        Connection conn = null;
+        Statement stmt = null;
+        String impaladIp = properties.getProperty("impalad.ip");
+        String impaladPort = properties.getProperty("impalad.port");
+        String imapalaUrl = generateImpalaUrl(impaladIp, impaladPort, dbName);
+        String imapalaSql = "refresh " + tableName;
+        try {
+            conn = DriverManager.getConnection(imapalaUrl, "hive", "123456");
+            stmt = conn.createStatement();
+            stmt.execute(imapalaSql);
+            logger.info(String.format("同步元数据信息到impala完成：imapalaSql=【%s】，rawSql=【%s】"
+                    , imapalaSql, rawSql));
+        } catch (Exception e) {
+            logger.error("error excute sql:【" + imapalaSql + "】", e);
+        } finally {
+            closeHiveStatementQuietly(stmt);
+            closeHiveConnectionQuietly(conn);
+        }
+    }
+
+    /**
+     * 拼接连接impalad 的url
+     *
+     * @param impaladIp
+     * @param impaladPort
+     * @param dbName
+     * @return
+     */
+    private static String generateImpalaUrl(String impaladIp, String impaladPort, String dbName) {
+        StringBuilder builder = new StringBuilder();
+        String fixStr = ";AuthMech=3;UID=hive;PWD=hive123;UseSasl=0";
+        builder.append("jdbc:impala://")
+                .append(impaladIp)
+                .append(":")
+                .append(impaladPort)
+                .append("/").append(dbName)
+                .append(fixStr);
+        return builder.toString();
     }
 }
