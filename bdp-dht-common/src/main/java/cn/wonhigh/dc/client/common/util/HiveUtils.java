@@ -34,34 +34,48 @@ public class HiveUtils {
     protected static String cdcEndData = "";
 
     public static Properties properties;
-    public static DruidDataSource dataSource;
+    public static DruidDataSource dataSourceSrc;
+    public static DruidDataSource dataSourceOds;
+
 
 
     static {
         //初始化hive的durid线程池
         properties = PropertyFile.getProps("");
-        dataSource = new DruidDataSource();
+        dataSourceSrc = new DruidDataSource();
 
-        dataSource.setUrl(properties.getProperty("hive.jdbc"));
-        dataSource.setDriverClassName(properties.getProperty("hive.driver.class.name"));
-        dataSource.setUsername(properties.getProperty("hive.user"));
-        dataSource.setPassword(properties.getProperty("hive.password"));
-        dataSource.setTestWhileIdle(Boolean.valueOf(properties.getProperty("hive.testWhileIdle")));
-        dataSource.setValidationQuery(properties.getProperty("hive.validationQuery"));
-        dataSource.setMaxActive(Integer.valueOf(properties.getProperty("hive.max.active")));
-        dataSource.setInitialSize(Integer.valueOf(properties.getProperty("hive.initialSize")));
-        dataSource.setRemoveAbandoned(Boolean.valueOf(properties.getProperty("hive.removeAbandoned")));
-        dataSource.setRemoveAbandonedTimeout(Integer.valueOf(properties.getProperty("hive.removeAbandonedTimeout")));
+        dataSourceSrc.setUrl(properties.getProperty("hive.jdbc.src"));
+        dataSourceSrc.setDriverClassName(properties.getProperty("hive.driver.class.name"));
+        dataSourceSrc.setUsername(properties.getProperty("hive.user"));
+        dataSourceSrc.setPassword(properties.getProperty("hive.password"));
+        dataSourceSrc.setTestWhileIdle(Boolean.valueOf(properties.getProperty("hive.testWhileIdle")));
+        dataSourceSrc.setValidationQuery(properties.getProperty("hive.validationQuery"));
+        dataSourceSrc.setMaxActive(Integer.valueOf(properties.getProperty("hive.max.active")));
+        dataSourceSrc.setInitialSize(Integer.valueOf(properties.getProperty("hive.initialSize")));
+        dataSourceSrc.setRemoveAbandoned(Boolean.valueOf(properties.getProperty("hive.removeAbandoned")));
+        dataSourceSrc.setRemoveAbandonedTimeout(Integer.valueOf(properties.getProperty("hive.removeAbandonedTimeout")));
+
+        dataSourceOds = new DruidDataSource();
+        dataSourceOds.setUrl(properties.getProperty("hive.jdbc.ods"));
+        dataSourceOds.setDriverClassName(properties.getProperty("hive.driver.class.name"));
+        dataSourceOds.setUsername(properties.getProperty("hive.user"));
+        dataSourceOds.setPassword(properties.getProperty("hive.password"));
+        dataSourceOds.setTestWhileIdle(Boolean.valueOf(properties.getProperty("hive.testWhileIdle")));
+        dataSourceOds.setValidationQuery(properties.getProperty("hive.validationQuery"));
+        dataSourceOds.setMaxActive(Integer.valueOf(properties.getProperty("hive.max.active")));
+        dataSourceOds.setInitialSize(Integer.valueOf(properties.getProperty("hive.initialSize")));
+        dataSourceOds.setRemoveAbandoned(Boolean.valueOf(properties.getProperty("hive.removeAbandoned")));
+        dataSourceOds.setRemoveAbandonedTimeout(Integer.valueOf(properties.getProperty("hive.removeAbandonedTimeout")));
     }
+
 
 
     /**
      * 从druid连接池中获取对应连接
-     *
      * @param dataSource
      * @return
      */
-    public static Connection getConnectionFromDruid(DruidDataSource dataSource) {
+    public static Connection getConnectionFromDruid(DruidDataSource dataSource){
 
         Connection connection = null;
 
@@ -76,7 +90,7 @@ public class HiveUtils {
     }
 
     /*
-     * 从 dc-client.properties 文件中读取cdc.table.list 配置的transactionHistoryLog 列表，
+     * 从 bdp-dht.properties 文件中读取cdc.table.list 配置的transactionHistoryLog 列表，
      * 如果该列表为空则不启动 历史数据迁移功能
      */
     public static String[] getCdcTableList() {
@@ -85,21 +99,59 @@ public class HiveUtils {
         String[] tmpTransHistoryLogSrc = new String[cdcTable_list.split(",").length];
         tmpTransHistoryLogSrc = cdcTable_list.split(",");
 
-        logger.info(String.format("在【dc-client.properties】文件中读取配置项目【cdc.table.list】读取的内容为【 %s 】，" + "个数为：【%s】",
+        logger.info(String.format("在【bdp-dht.properties】文件中读取配置项目【cdc.table.list】读取的内容为【 %s 】，" + "个数为：【%s】",
                 cdcTable_list, tmpTransHistoryLogSrc.length));
         return tmpTransHistoryLogSrc;
     }
 
 
-    public static Connection getConn(String url, String user, String passwd, Integer jdbcTimeout) throws SQLException {
+    /**
+     * 重载获取hive连接池
+     * 可动态获取hive库连接池信息
+     * @param dbName
+     * @param url
+     * @param user
+     * @param passwd
+     * @param jdbcTimeout
+     * @return
+     * @throws SQLException
+     */
+    public static Connection getConn(String dbName,String url, String user, String passwd, Integer jdbcTimeout) throws SQLException {
         logger.info("获取Hive JDBC连接信息: " + url);
         // DriverManager.setLoginTimeout(jdbcTimeout);
 
-        Connection connectionFromDruid = getConnectionFromDruid(dataSource);
+        Connection connectionFromDruid = null;
+        //根据数据库名称动态选择连接池
+        if("dc_src".equalsIgnoreCase(dbName)){
+            connectionFromDruid = getConnectionFromDruid(dataSourceSrc);
+        }else if("dc_ods".equalsIgnoreCase(dbName)){
+            connectionFromDruid = getConnectionFromDruid(dataSourceOds);
+        }
+
         if(null !=  connectionFromDruid){
             logger.info("从druid连接池中获取hive连接成功");
             return connectionFromDruid;
         }
+
+        String jdbcUser = "hive";
+        String jdbcPassword = "123456";
+        logger.info("druid连接池中获取hive连接失败，直接创建connection");
+
+        return DriverManager.getConnection(url, user == null ? jdbcUser : user, passwd == null ? jdbcPassword : passwd);
+    }
+
+    /**
+     * 获取当个hive数据库连接
+     * @param url
+     * @param user
+     * @param passwd
+     * @param jdbcTimeout
+     * @return
+     * @throws SQLException
+     */
+    public static Connection getConn(String url, String user, String passwd, Integer jdbcTimeout) throws SQLException {
+        logger.info("获取Hive JDBC连接信息: " + url);
+        // DriverManager.setLoginTimeout(jdbcTimeout);
 
         String jdbcUser = "hive";
         String jdbcPassword = "123456";
@@ -139,7 +191,7 @@ public class HiveUtils {
             syncEndTimeStr = String.valueOf(getHivePartitionValue(endTime));
         }
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getTargetDbEntity().getConnectionUrl(),
                     taskConfig.getTargetDbEntity().getUserName(), taskConfig.getTargetDbEntity().getPassword(),
                     jdbcTimeOut);
 
@@ -264,7 +316,7 @@ public class HiveUtils {
         Connection conn = null;
         String fullTable = tableName + HiveDefinePartNameEnum.CLN_TABLE_NAME_SUBFIX.getValue();// 全量表
         try {
-            conn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName()taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeOut);
 
@@ -304,7 +356,7 @@ public class HiveUtils {
         String fullTable = "";
 
         // fullTable += HiveDefinePartNameEnum.DB_NAME_ODS.getValue();
-        conn = getConn(taskConfig.getTargetDbEntity().getConnectionUrl(), taskConfig.getTargetDbEntity().getUserName(),
+        conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getTargetDbEntity().getConnectionUrl(), taskConfig.getTargetDbEntity().getUserName(),
                 taskConfig.getTargetDbEntity().getPassword(), jdbcTimeOut);
         logger.debug("URL:" + taskConfig.getTargetDbEntity().getConnectionUrl() + " userName:"
                 + taskConfig.getTargetDbEntity().getUserName() + " passWd:"
@@ -324,11 +376,6 @@ public class HiveUtils {
             executeHiveStatementAndClose(truncateFullTableStatement);
             logger.info(String.format("Truncate 全量去重表【%s】成功", fullTable));
 
-            //同步元数据到Impala Catalog
-            HiveUtils.syncMetaData4Impala(truncateFullTableSql.toString()
-                    , taskConfig.getTargetDbEntity().getDbName(),
-                    taskConfig.getTargetTable());
-
             StringBuilder createFullTableSql = new StringBuilder("insert into table ");
             createFullTableSql.append(fullTable);
             if (taskConfig.getSyncType().equals(SyncTypeEnum.SYNC_TYPE_1.getValue())) {
@@ -347,12 +394,6 @@ public class HiveUtils {
             logger.info(String.format("开始向全量表【%s】插入数据，详细sql语句：【%s】", fullTable, createFullTableSql));
             PreparedStatement createFullTableStatement = conn.prepareStatement(createFullTableSql.toString());
             executeHiveStatementAndClose(createFullTableStatement);
-
-            //同步元数据到Impala Catalog
-            HiveUtils.syncMetaData4Impala(createFullTableSql.toString()
-                    , taskConfig.getTargetDbEntity().getDbName(),
-                    taskConfig.getTargetTable());
-
             logger.info(String.format("插入全量表【%s】成功", fullTable));
 
         } catch (Exception e) {
@@ -381,7 +422,7 @@ public class HiveUtils {
     ) throws Exception {
         /*
          * 初始化变量
-		 */
+         */
         String targetTableName = taskConfig.getTargetTable(); // 清洗的ods表
         String sourceTableName = taskConfig.getSourceTable();// src表
         String startTime = null;// 开始时间
@@ -410,7 +451,7 @@ public class HiveUtils {
         Connection sourceConn = null;
 
         try {
-            sourceConn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             setHadoopParams(globleHadoopParams, taskConfig, sourceConn, jobName);
@@ -547,7 +588,7 @@ public class HiveUtils {
                                         Integer selectPreMonth, Date... timeSpan) throws Exception {
         /*
          * 初始化变量
-		 */
+         */
         String targetTableName = taskConfig.getTargetTable(); // 清洗的ods表
         String sourceTableName = taskConfig.getSourceTable();// src表
         String startTime = null;// 开始时间
@@ -576,7 +617,7 @@ public class HiveUtils {
         Connection sourceConn = null;
 
         try {
-            sourceConn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             setHadoopParams(globleHadoopParams, taskConfig, sourceConn, jobName);
@@ -649,10 +690,7 @@ public class HiveUtils {
             PreparedStatement hqlStatement = sourceConn.prepareStatement(hql.toString());
 
             executeHiveStatementAndClose(hqlStatement);
-            //同步元数据到Impala Catalog
-            HiveUtils.syncMetaData4Impala(hql.toString()
-                    , taskConfig.getTargetDbEntity().getDbName(),
-                    taskConfig.getTargetTable());
+
             logger.info(String.format("----ODS表【%s】清洗完成！", targetTableName));
 
         } catch (Throwable e) {
@@ -699,7 +737,7 @@ public class HiveUtils {
                     taskConfig.getGroupName(), taskConfig.getTriggerName());
             logger.info(message);
 
-            conn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             if (conn == null) {
@@ -746,10 +784,7 @@ public class HiveUtils {
                     selectPreMonth, cleandDataMonth, lastestSeqValue, maxSeqNo));
 
             executeHiveStatementAndClose(delDataStatement);
-            //同步元数据到Impala Catalog
-            HiveUtils.syncMetaData4Impala(delSqlStr
-                    , taskConfig.getTargetDbEntity().getDbName(),
-                    taskConfig.getTargetTable());
+
             message = String.format("删除增量数据 成功！ 【groupName：%s】【triggerName：%s】", taskConfig.getGroupName(),
                     taskConfig.getTriggerName());
             logger.info(message);
@@ -788,10 +823,7 @@ public class HiveUtils {
             logger.info(message);
 
             executeHiveStatementAndClose(insertDataStatement);
-            //同步元数据到Impala Catalog
-            HiveUtils.syncMetaData4Impala(insertOdsSql
-                    , taskConfig.getTargetDbEntity().getDbName(),
-                    taskConfig.getTargetTable());
+
             message = String.format("插入增量数据 成功！ 【groupName：%s】【triggerName：%s】", taskConfig.getGroupName(),
                     taskConfig.getTriggerName());
             logger.info(message);
@@ -840,7 +872,7 @@ public class HiveUtils {
         Connection con = null;
         Statement stmt = null;
         try {
-            con = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            con = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(), 30);
             stmt = con.createStatement();
 
@@ -1021,7 +1053,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
             // String groupName = taskConfig.getGroupName();
             // if (!groupName.equals("gtp_kettle")) {// gtp_kettle组名的任务不设置
             setHadoopParams(globleHadoopParams, taskConfig, conn);
@@ -1100,10 +1132,10 @@ public class HiveUtils {
                 String[] keyValues = keyValueParam.split("=");
                 if (keyValues.length != 2) {
                     logger.warn(
-                            "在dc-client.properties中读取 【dc.import.params 或dc.export.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
+                            "在bdp-dht.properties中读取 【dc.import.params 或dc.export.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
                     continue;
                 }
-                logger.info("在dc-client.properties中读取 【dc.import.params 或dc.export.params】 参数有效！key =" + keyValues[0]
+                logger.info("在bdp-dht.properties中读取 【dc.import.params 或dc.export.params】 参数有效！key =" + keyValues[0]
                         + " value =" + keyValues[1]);
                 if (keyValues[0].trim().equals("mapred.job.name") || keyValues[0].trim().equals("mapreduce.job.queuename")) {
                     Date date = new Date();
@@ -1116,10 +1148,10 @@ public class HiveUtils {
                             taskConfig.getTriggerName(), currentTime);
 //                    params.put(keyValues[0].trim(), jobName);
 
-                    logger.info("在dc-client.properties中读设置jobName！key =" + keyValues[0] + " value =" + jobName);
+                    logger.info("在bdp-dht.properties中读设置jobName！key =" + keyValues[0] + " value =" + jobName);
                 } else {
                     params.put(keyValues[0].trim(), keyValues[1].trim());
-                    logger.info("在dc-client.properties中读设置jobName！key =" + keyValues[0].trim() + " value ="
+                    logger.info("在bdp-dht.properties中读设置jobName！key =" + keyValues[0].trim() + " value ="
                             + keyValues[1].trim());
                 }
 //                params.put(keyValues[0], keyValues[1]);
@@ -1155,7 +1187,7 @@ public class HiveUtils {
             command += System.lineSeparator();
             if (params.containsKey(entry.getKey().trim())) {
                 message = String.format(
-                        "更新dc-client.properties中的sqoop参数！ 从配置文件【groupName：%s】【triggerName：%s】中读取【key = %s】【value = %s】",
+                        "更新bdp-dht.properties中的sqoop参数！ 从配置文件【groupName：%s】【triggerName：%s】中读取【key = %s】【value = %s】",
                         taskConfig.getGroupName(), taskConfig.getTriggerName(), entry.getKey().trim(),
                         entry.getValue().trim());
             } else {
@@ -1194,10 +1226,10 @@ public class HiveUtils {
                 String[] keyValues = keyValueParam.split("=");
                 if (keyValues.length != 2) {
                     logger.warn(
-                            "在dc-client.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.clnd.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
+                            "在bdp-dht.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.clnd.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
                     continue;
                 }
-                logger.info("在dc-client.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.thl.params】 参数有效！key ="
+                logger.info("在bdp-dht.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.thl.params】 参数有效！key ="
                         + keyValues[0] + " value =" + keyValues[1]);
                 if (keyValues[0].trim().contains("mapred.job.name")) {
                     Date date = new Date();
@@ -1210,7 +1242,7 @@ public class HiveUtils {
                             taskConfig.getTriggerName(), System.currentTimeMillis());
                     hadoopParamsMap.put(keyValues[0].trim(), jobName);
 
-                    logger.info("在dc-client.properties中读设置jobName！key =" + keyValues[0] + " value =" + jobName);
+                    logger.info("在bdp-dht.properties中读设置jobName！key =" + keyValues[0] + " value =" + jobName);
                 } else {
                     hadoopParamsMap.put(keyValues[0].trim(), keyValues[1].trim());
                 }
@@ -1236,7 +1268,7 @@ public class HiveUtils {
                 for (Map.Entry<String, String> entry : hiveParam.entrySet()) {
                     if (hadoopParamsMap.containsKey(entry.getKey().trim())) {
                         message = String.format(
-                                "更新dc-client.properties中的sqoop参数！ 从配置文件【groupName：%s】【triggerName：%s】中读取【key = %s】【value = %s】",
+                                "更新bdp-dht.properties中的sqoop参数！ 从配置文件【groupName：%s】【triggerName：%s】中读取【key = %s】【value = %s】",
                                 taskConfig.getGroupName(), taskConfig.getTriggerName(), entry.getKey().trim(),
                                 entry.getValue().trim());
                         logger.info(message);
@@ -1309,13 +1341,13 @@ public class HiveUtils {
 
         // simpleTest(dbConfig, tableName);
 
-		/*
+        /*
          * 测试流程 1、清空Hive表item_group,ful_item_group 2、调度导入任务 3、执行去重任务，得到一个全量表
-		 * 4、验证数据: SELECT COUNT(group_no),COUNT(DISTINCT group_no) FROM
-		 * ful_item_group; 5、更新数据源数据 6、再次调度导入任务 7、再次执行去重任务 8、验证数据: SELECT
-		 * COUNT(1),COUNT(DISTINCT group_no) FROM item_group; SELECT
-		 * COUNT(1),COUNT(DISTINCT group_no) FROM ful_item_group;
-		 */
+         * 4、验证数据: SELECT COUNT(group_no),COUNT(DISTINCT group_no) FROM
+         * ful_item_group; 5、更新数据源数据 6、再次调度导入任务 7、再次执行去重任务 8、验证数据: SELECT
+         * COUNT(1),COUNT(DISTINCT group_no) FROM item_group; SELECT
+         * COUNT(1),COUNT(DISTINCT group_no) FROM ful_item_group;
+         */
 //        taskConfig.setSourceDbEntity(dbConfig);
         // removeDuplicate(taskConfig, uniqueKeys, "", 30, 6, new Date(),
         // DateUtils.getNextDay(new Date()));
@@ -1330,7 +1362,7 @@ public class HiveUtils {
         String timeSubixStr = formatter.format(new Date());
         String bakTable = fullTable + "_del_bak" + timeSubixStr;
         try {
-            conn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(), 30);
 
             // 1.创建临时表和备份表，如果不存在
@@ -1440,7 +1472,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
             // conn = getConn1(); //得到数据连接
             stmt = conn.createStatement();
             boolean rs = stmt.execute(sql); // 执行sql结果
@@ -1461,7 +1493,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
             // conn = getConn1(); //得到数据连接
             stmt = conn.createStatement();
             int rs = stmt.executeUpdate(sql); // 执行sql结果
@@ -1520,9 +1552,9 @@ public class HiveUtils {
 
     public static void removeDuplicate3(TaskPropertiesConfig taskConfig, String globleHadoopParams, Integer jdbcTimeout,
                                         Integer selectPreMonth, Date... timeSpan) throws Exception {
-            /*
-             * 初始化变量
-             */
+        /*
+         * 初始化变量
+         */
         String targetTableName = taskConfig.getTargetTable(); // 清洗的ods表
         String sourceTableName = taskConfig.getSourceTable();// src表
         String startTime = null;// 开始时间
@@ -1554,7 +1586,7 @@ public class HiveUtils {
         Connection sourceConn = null;
 
         try {
-            sourceConn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             setHadoopParams(globleHadoopParams, taskConfig, sourceConn);
@@ -1686,10 +1718,10 @@ public class HiveUtils {
                 String[] keyValues = keyValueParam.split("=");
                 if (keyValues.length != 2) {
                     logger.warn(
-                            "在dc-client.properties中读取 【dc.import.params 或dc.export.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
+                            "在bdp-dht.properties中读取 【dc.import.params 或dc.export.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
                     continue;
                 }
-                logger.info("在dc-client.properties中读取 【dc.import.params 或dc.export.params】 参数有效！key =" + keyValues[0]
+                logger.info("在bdp-dht.properties中读取 【dc.import.params 或dc.export.params】 参数有效！key =" + keyValues[0]
                         + " value =" + keyValues[1]);
                 if (keyValues[0].trim().equals("mapred.job.name") || keyValues[0].trim().equals("mapreduce.job.queuename")) {
                     res.put(keyValues[0], keyValues[1]);
@@ -1717,10 +1749,10 @@ public class HiveUtils {
                 String[] keyValues = keyValueParam.split("=");
                 if (keyValues.length != 2) {
                     logger.warn(
-                            "在dc-client.properties中读取 【dc.import.params 或dc.export.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
+                            "在bdp-dht.properties中读取 【dc.import.params 或dc.export.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
                     continue;
                 }
-                logger.info("在dc-client.properties中读取 【dc.import.params 或dc.export.params】 参数有效！key =" + keyValues[0]
+                logger.info("在bdp-dht.properties中读取 【dc.import.params 或dc.export.params】 参数有效！key =" + keyValues[0]
                         + " value =" + keyValues[1]);
                 if (keyValues[0].trim().equals("mapred.job.name") || keyValues[0].trim().equals("mapreduce.job.queuename")) {
                     Date date = new Date();
@@ -1732,10 +1764,10 @@ public class HiveUtils {
                             taskConfig.getTriggerName(), System.currentTimeMillis());
                     res.put(keyValues[0].trim(), jobName);
                     sqoopMap.setProperties(res);
-                    logger.info("在dc-client.properties中读设置jobName！key =" + keyValues[0] + " value =" + jobName);
+                    logger.info("在bdp-dht.properties中读设置jobName！key =" + keyValues[0] + " value =" + jobName);
                 } else {
                     params.put(keyValues[0].trim(), keyValues[1].trim());
-                    logger.info("在dc-client.properties中读设置jobName！key =" + keyValues[0].trim() + " value ="
+                    logger.info("在bdp-dht.properties中读设置jobName！key =" + keyValues[0].trim() + " value ="
                             + keyValues[1].trim());
                 }
 //                params.put(keyValues[0], keyValues[1]);
@@ -1771,7 +1803,7 @@ public class HiveUtils {
             command += System.lineSeparator();
             if (params.containsKey(entry.getKey().trim())) {
                 message = String.format(
-                        "更新dc-client.properties中的sqoop参数！ 从配置文件【groupName：%s】【triggerName：%s】中读取【key = %s】【value = %s】",
+                        "更新bdp-dht.properties中的sqoop参数！ 从配置文件【groupName：%s】【triggerName：%s】中读取【key = %s】【value = %s】",
                         taskConfig.getGroupName(), taskConfig.getTriggerName(), entry.getKey().trim(),
                         entry.getValue().trim());
             } else {
@@ -1798,7 +1830,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
             // String groupName = taskConfig.getGroupName();
             // if (!groupName.equals("gtp_kettle")) {// gtp_kettle组名的任务不设置
             setHadoopParams(globleHadoopParams, taskConfig, conn, remoteJobInvokeParamsDto, jobId);
@@ -1841,10 +1873,10 @@ public class HiveUtils {
                 String[] keyValues = keyValueParam.split("=");
                 if (keyValues.length != 2) {
                     logger.warn(
-                            "在dc-client.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.clnd.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
+                            "在bdp-dht.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.clnd.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
                     continue;
                 }
-                logger.info("在dc-client.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.thl.params】 参数有效！key ="
+                logger.info("在bdp-dht.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.thl.params】 参数有效！key ="
                         + keyValues[0] + " value =" + keyValues[1]);
                 if (keyValues[0].trim().contains("mapred.job.name")) {
                     Date date = new Date();
@@ -1856,7 +1888,7 @@ public class HiveUtils {
                             taskConfig.getTriggerName(), System.currentTimeMillis());
                     hadoopParamsMap.put(keyValues[0].trim(), jobName);
 
-                    logger.info("在dc-client.properties中读设置jobName！key =" + keyValues[0] + " value =" + jobName);
+                    logger.info("在bdp-dht.properties中读设置jobName！key =" + keyValues[0] + " value =" + jobName);
                 } else {
                     hadoopParamsMap.put(keyValues[0].trim(), keyValues[1].trim());
                 }
@@ -1882,7 +1914,7 @@ public class HiveUtils {
                 for (Map.Entry<String, String> entry : hiveParam.entrySet()) {
                     if (hadoopParamsMap.containsKey(entry.getKey().trim())) {
                         message = String.format(
-                                "更新dc-client.properties中的sqoop参数！ 从配置文件【groupName：%s】【triggerName：%s】中读取【key = %s】【value = %s】",
+                                "更新bdp-dht.properties中的sqoop参数！ 从配置文件【groupName：%s】【triggerName：%s】中读取【key = %s】【value = %s】",
                                 taskConfig.getGroupName(), taskConfig.getTriggerName(), entry.getKey().trim(),
                                 entry.getValue().trim());
                         logger.info(message);
@@ -1936,7 +1968,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
             // String groupName = taskConfig.getGroupName();
             // if (!groupName.equals("gtp_kettle")) {// gtp_kettle组名的任务不设置
             setHadoopParams(globleHadoopParams, taskConfig, conn, jobName);
@@ -1976,10 +2008,10 @@ public class HiveUtils {
                 String[] keyValues = keyValueParam.split("=");
                 if (keyValues.length != 2) {
                     logger.warn(
-                            "在dc-client.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.clnd.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
+                            "在bdp-dht.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.clnd.params】 参数无效！eg:【dc.export.params=--escaped-by=\\006,--enclosed-by=\\006】");
                     continue;
                 }
-                logger.info("在dc-client.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.thl.params】 参数有效！key ="
+                logger.info("在bdp-dht.properties中读取 【dc.hadoop.thl.params 或dc.hadoop.thl.params】 参数有效！key ="
                         + keyValues[0] + " value =" + keyValues[1]);
                 if (keyValues[0].trim().contains("mapred.job.name")) {
                     Date date = new Date();
@@ -1989,7 +2021,7 @@ public class HiveUtils {
                     String currentTime = format.format(date.getTime());
                     hadoopParamsMap.put(keyValues[0].trim(), jobName);
 
-                    logger.info("在dc-client.properties中读设置jobName！key =" + keyValues[0] + " value =" + jobName);
+                    logger.info("在bdp-dht.properties中读设置jobName！key =" + keyValues[0] + " value =" + jobName);
                 } else {
                     hadoopParamsMap.put(keyValues[0].trim(), keyValues[1].trim());
                 }
@@ -2015,7 +2047,7 @@ public class HiveUtils {
                 for (Map.Entry<String, String> entry : hiveParam.entrySet()) {
                     if (hadoopParamsMap.containsKey(entry.getKey().trim())) {
                         message = String.format(
-                                "更新dc-client.properties中的sqoop参数！ 从配置文件【groupName：%s】【triggerName：%s】中读取【key = %s】【value = %s】",
+                                "更新bdp-dht.properties中的sqoop参数！ 从配置文件【groupName：%s】【triggerName：%s】中读取【key = %s】【value = %s】",
                                 taskConfig.getGroupName(), taskConfig.getTriggerName(), entry.getKey().trim(),
                                 entry.getValue().trim());
                         logger.info(message);
@@ -2062,53 +2094,5 @@ public class HiveUtils {
             }
         }
 
-    }
-
-    /**
-     * 同步Imapla元数据到impala catalog
-     *
-     * @param imapalaUrl
-     * @param imapalaSql
-     * @param rawSql
-     */
-    public static void syncMetaData4Impala(String rawSql, String dbName, String tableName) {
-        Connection conn = null;
-        Statement stmt = null;
-        String impaladIp = properties.getProperty("impalad.ip");
-        String impaladPort = properties.getProperty("impalad.port");
-        String imapalaUrl = generateImpalaUrl(impaladIp, impaladPort, dbName);
-        String imapalaSql = "refresh " + tableName;
-        try {
-            conn = DriverManager.getConnection(imapalaUrl, "hive", "123456");
-            stmt = conn.createStatement();
-            stmt.execute(imapalaSql);
-            logger.info(String.format("同步元数据信息到impala完成：imapalaSql=【%s】，rawSql=【%s】"
-                    , imapalaSql, rawSql));
-        } catch (Exception e) {
-            logger.error("error excute sql:【" + imapalaSql + "】", e);
-        } finally {
-            closeHiveStatementQuietly(stmt);
-            closeHiveConnectionQuietly(conn);
-        }
-    }
-
-    /**
-     * 拼接连接impalad 的url
-     *
-     * @param impaladIp
-     * @param impaladPort
-     * @param dbName
-     * @return
-     */
-    private static String generateImpalaUrl(String impaladIp, String impaladPort, String dbName) {
-        StringBuilder builder = new StringBuilder();
-        String fixStr = ";AuthMech=3;UID=hive;PWD=hive123;UseSasl=0";
-        builder.append("jdbc:impala://")
-                .append(impaladIp)
-                .append(":")
-                .append(impaladPort)
-                .append("/").append(dbName)
-                .append(fixStr);
-        return builder.toString();
     }
 }
