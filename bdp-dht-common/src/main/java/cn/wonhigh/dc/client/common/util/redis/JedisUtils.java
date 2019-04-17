@@ -1017,6 +1017,8 @@ public class JedisUtils {
             returnBrokenResource(jedis);
             e.printStackTrace();
             throw e;
+        } finally {
+            returnResource(jedis);
         }
         return res;
     }
@@ -1035,5 +1037,7 @@ public class JedisUtils {
 //        Object object = getObject("BDP_MDM_TASK_XML_retail_pos-order_ticket_sp.xml");
 //        System.out.println(test_key);
 //        System.out.println(bdp_mdm.size());
+
+
     }
 }

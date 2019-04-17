@@ -326,6 +326,8 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                             logger.info(message);
                             HiveUtils.execUpdate(taskConfig.getTargetDbEntity(), taskConfig, hiveJobNamePref, sbBuilder.toString(),
                                     30);
+                            HiveUtils.syncMetaData4Impala(sbBuilder.toString()
+                                    , taskConfig.getTargetDbEntity().getDbName(), taskConfig.getTargetTable());
                         }
 
                         String sql = "TRUNCATE TABLE " + taskConfig.getTargetTable();
@@ -339,6 +341,10 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                             message = String.format("改任务是全量导入任务，清空装载区内的数据【%s】【groupName：%s】【triggerName：%s】", sql,
                                     groupName, taskName);
                             logger.info(message);
+                            //同步元数据到Impala Catalog
+                            HiveUtils.syncMetaData4Impala(sql
+                                    , taskConfig.getTargetDbEntity().getDbName(),
+                                    taskConfig.getTargetTable());
                         } else {
                             ManagerException managerException = new ManagerException(String.format("【groupName：%s】【triggerName：%s】导入出现异常,清空全量表失败：",
                                     groupName, taskName));
@@ -403,6 +409,11 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                             logger.info(message);
                             HiveUtils.execUpdate(taskConfig.getTargetDbEntity(), taskConfig, hiveJobNamePref, repairData.toString(),
                                     30);
+                            //同步元数据到Impala Catalog
+                            HiveUtils.syncMetaData4Impala(repairData.toString()
+                                    , taskConfig.getTargetDbEntity().getDbName(),
+                                    taskConfig.getTargetTable());
+
                             // 第二步 创建新表 create table 表名称 like
                             // 表名称+时间戳（yyyyMMddHHmmss）
                             StringBuilder createTable = new StringBuilder();
@@ -437,6 +448,12 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                             logger.info(message);
                             HiveUtils.execUpdate(taskConfig.getTargetDbEntity(), taskConfig, hiveJobNamePref, insertData.toString(),
                                     30);
+
+                            //同步元数据到Impala Catalog
+                            HiveUtils.syncMetaData4Impala(insertData.toString()
+                                    , taskConfig.getTargetDbEntity().getDbName(),
+                                    taskConfig.getTargetTable());
+
 
                             message = String.format("修复数据 第四步：将业务库的数据插入到新表：【groupName：%s】【triggerName：%s】", groupName,
                                     taskName);
@@ -483,6 +500,11 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                             logger.info(message);
                             HiveUtils.execUpdate(taskConfig.getTargetDbEntity(), taskConfig, hiveJobNamePref, sbBuilder.toString(),
                                     30);
+                            //同步元数据到Impala Catalog
+                            HiveUtils.syncMetaData4Impala(sbBuilder.toString()
+                                    , taskConfig.getTargetDbEntity().getDbName(),
+                                    taskConfig.getTargetTable());
+
                         }
                         sbBuilder = new StringBuilder();
                         sbBuilder.append("ALTER TABLE ");
@@ -496,10 +518,13 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                                 groupName, taskName, sbBuilder.toString());
                         logger.info(message);
                         HiveUtils.execUpdate(taskConfig.getTargetDbEntity(), taskConfig, hiveJobNamePref, sbBuilder.toString(), 30);
-
                         message = String.format("完成对Partition【%d】的格式化!【groupName：%s】【triggerName：%s】", partition,
                                 groupName, taskName);
                         logger.info(message);
+                        //同步元数据到Impala Catalog
+                        HiveUtils.syncMetaData4Impala(sbBuilder.toString()
+                                , taskConfig.getTargetDbEntity().getDbName(),
+                                taskConfig.getTargetTable());
                     }
 //                    3. 初始化任务，构造sqoop参数
                     return getIncreamentSqoopParams(taskConfig, syncBeginTime, syncEndTime, jobId);
@@ -607,6 +632,11 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                             .format(syncBeginTime));
                     logger.info(String.format("转移txt表的数据至parquet中的sql【%s】", sbuBuffer.toString()));
                     HiveUtils.execUpdate(taskConfig.getTargetDbEntity(), taskConfig, "", sbuBuffer.toString(), 30);
+
+                    //同步元数据到Impala Catalog
+                    HiveUtils.syncMetaData4Impala(sbuBuffer.toString()
+                            , taskConfig.getTargetDbEntity().getDbName(),
+                            taskConfig.getTargetTable());
 
                 } catch (Exception e) {
                     ManagerException managerException = new ManagerException("数据从txt类型的表转移至parquet失败.....");
@@ -1016,7 +1046,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
             logger.info(String.format("从对应%s-%s.xml文件中读取信息：%s 【%s】", taskConfig.getGroupName(),
                     taskConfig.getTriggerName(), message, mapNumIm));
         } else {
-            logger.info(String.format("从对应bdp-dht.properties文件中读取信息：%s 导入map数【%s】", message, mapNumIm));
+            logger.info(String.format("从对应dc-client.properties文件中读取信息：%s 导入map数【%s】", message, mapNumIm));
         }
         // 简单的分页机制（一条sql被分成多条来执行，缺陷：当时间非常集中时，难以拆分）
         String boundaryQuerySql = "select " + "min(" + syncTimeColumnName + ")," + "max(" + syncTimeColumnName + ")"
@@ -1312,7 +1342,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                         taskConfig);
                 if (PropertyFile.getValue(MessageConstant.TRANSCATION_HISTORY_LOG, "")
                         .contains(groupName + "_" + taskName)) {
-                    String message = String.format("导入完成！发现【%s_%s】配置在文件bdp-dht.properties的cdc.table.list 列表中，"
+                    String message = String.format("导入完成！发现【%s_%s】配置在文件dc-client.properties的cdc.table.list 列表中，"
                             + "开始更新dml_type  != 0 的id_column_value值到缓存中", groupName, taskName);
                     logger.info(message);
 
