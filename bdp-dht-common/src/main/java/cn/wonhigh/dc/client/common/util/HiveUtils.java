@@ -34,25 +34,38 @@ public class HiveUtils {
     protected static String cdcEndData = "";
 
     public static Properties properties;
-    public static DruidDataSource dataSource;
+    public static DruidDataSource dataSourceSrc;
+    public static DruidDataSource dataSourceOds;
 
 
 
     static {
         //初始化hive的durid线程池
         properties = PropertyFile.getProps("");
-        dataSource = new DruidDataSource();
+        dataSourceSrc = new DruidDataSource();
 
-        dataSource.setUrl(properties.getProperty("hive.jdbc"));
-        dataSource.setDriverClassName(properties.getProperty("hive.driver.class.name"));
-        dataSource.setUsername(properties.getProperty("hive.user"));
-        dataSource.setPassword(properties.getProperty("hive.password"));
-        dataSource.setTestWhileIdle(Boolean.valueOf(properties.getProperty("hive.testWhileIdle")));
-        dataSource.setValidationQuery(properties.getProperty("hive.validationQuery"));
-        dataSource.setMaxActive(Integer.valueOf(properties.getProperty("hive.max.active")));
-        dataSource.setInitialSize(Integer.valueOf(properties.getProperty("hive.initialSize")));
-        dataSource.setRemoveAbandoned(Boolean.valueOf(properties.getProperty("hive.removeAbandoned")));
-        dataSource.setRemoveAbandonedTimeout(Integer.valueOf(properties.getProperty("hive.removeAbandonedTimeout")));
+        dataSourceSrc.setUrl(properties.getProperty("hive.jdbc.src"));
+        dataSourceSrc.setDriverClassName(properties.getProperty("hive.driver.class.name"));
+        dataSourceSrc.setUsername(properties.getProperty("hive.user"));
+        dataSourceSrc.setPassword(properties.getProperty("hive.password"));
+        dataSourceSrc.setTestWhileIdle(Boolean.valueOf(properties.getProperty("hive.testWhileIdle")));
+        dataSourceSrc.setValidationQuery(properties.getProperty("hive.validationQuery"));
+        dataSourceSrc.setMaxActive(Integer.valueOf(properties.getProperty("hive.max.active")));
+        dataSourceSrc.setInitialSize(Integer.valueOf(properties.getProperty("hive.initialSize")));
+        dataSourceSrc.setRemoveAbandoned(Boolean.valueOf(properties.getProperty("hive.removeAbandoned")));
+        dataSourceSrc.setRemoveAbandonedTimeout(Integer.valueOf(properties.getProperty("hive.removeAbandonedTimeout")));
+
+        dataSourceOds = new DruidDataSource();
+        dataSourceOds.setUrl(properties.getProperty("hive.jdbc.ods"));
+        dataSourceOds.setDriverClassName(properties.getProperty("hive.driver.class.name"));
+        dataSourceOds.setUsername(properties.getProperty("hive.user"));
+        dataSourceOds.setPassword(properties.getProperty("hive.password"));
+        dataSourceOds.setTestWhileIdle(Boolean.valueOf(properties.getProperty("hive.testWhileIdle")));
+        dataSourceOds.setValidationQuery(properties.getProperty("hive.validationQuery"));
+        dataSourceOds.setMaxActive(Integer.valueOf(properties.getProperty("hive.max.active")));
+        dataSourceOds.setInitialSize(Integer.valueOf(properties.getProperty("hive.initialSize")));
+        dataSourceOds.setRemoveAbandoned(Boolean.valueOf(properties.getProperty("hive.removeAbandoned")));
+        dataSourceOds.setRemoveAbandonedTimeout(Integer.valueOf(properties.getProperty("hive.removeAbandonedTimeout")));
     }
 
 
@@ -92,16 +105,53 @@ public class HiveUtils {
     }
 
 
-
-    public static Connection getConn(String url, String user, String passwd, Integer jdbcTimeout) throws SQLException {
+    /**
+     * 重载获取hive连接池
+     * 可动态获取hive库连接池信息
+     * @param dbName
+     * @param url
+     * @param user
+     * @param passwd
+     * @param jdbcTimeout
+     * @return
+     * @throws SQLException
+     */
+    public static Connection getConn(String dbName,String url, String user, String passwd, Integer jdbcTimeout) throws SQLException {
         logger.info("获取Hive JDBC连接信息: " + url);
         // DriverManager.setLoginTimeout(jdbcTimeout);
 
-        Connection connectionFromDruid = getConnectionFromDruid(dataSource);
+        Connection connectionFromDruid = null;
+        //根据数据库名称动态选择连接池
+        if("dc_src".equalsIgnoreCase(dbName)){
+            connectionFromDruid = getConnectionFromDruid(dataSourceSrc);
+        }else if("dc_ods".equalsIgnoreCase(dbName)){
+            connectionFromDruid = getConnectionFromDruid(dataSourceOds);
+        }
+
         if(null !=  connectionFromDruid){
             logger.info("从druid连接池中获取hive连接成功");
             return connectionFromDruid;
         }
+
+        String jdbcUser = "hive";
+        String jdbcPassword = "123456";
+        logger.info("druid连接池中获取hive连接失败，直接创建connection");
+
+        return DriverManager.getConnection(url, user == null ? jdbcUser : user, passwd == null ? jdbcPassword : passwd);
+    }
+
+    /**
+     * 获取当个hive数据库连接
+     * @param url
+     * @param user
+     * @param passwd
+     * @param jdbcTimeout
+     * @return
+     * @throws SQLException
+     */
+    public static Connection getConn(String url, String user, String passwd, Integer jdbcTimeout) throws SQLException {
+        logger.info("获取Hive JDBC连接信息: " + url);
+        // DriverManager.setLoginTimeout(jdbcTimeout);
 
         String jdbcUser = "hive";
         String jdbcPassword = "123456";
@@ -141,7 +191,7 @@ public class HiveUtils {
             syncEndTimeStr = String.valueOf(getHivePartitionValue(endTime));
         }
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getTargetDbEntity().getConnectionUrl(),
                     taskConfig.getTargetDbEntity().getUserName(), taskConfig.getTargetDbEntity().getPassword(),
                     jdbcTimeOut);
 
@@ -266,7 +316,7 @@ public class HiveUtils {
         Connection conn = null;
         String fullTable = tableName + HiveDefinePartNameEnum.CLN_TABLE_NAME_SUBFIX.getValue();// 全量表
         try {
-            conn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeOut);
 
@@ -306,7 +356,7 @@ public class HiveUtils {
         String fullTable = "";
 
         // fullTable += HiveDefinePartNameEnum.DB_NAME_ODS.getValue();
-        conn = getConn(taskConfig.getTargetDbEntity().getConnectionUrl(), taskConfig.getTargetDbEntity().getUserName(),
+        conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getTargetDbEntity().getConnectionUrl(), taskConfig.getTargetDbEntity().getUserName(),
                 taskConfig.getTargetDbEntity().getPassword(), jdbcTimeOut);
         logger.debug("URL:" + taskConfig.getTargetDbEntity().getConnectionUrl() + " userName:"
                 + taskConfig.getTargetDbEntity().getUserName() + " passWd:"
@@ -401,7 +451,7 @@ public class HiveUtils {
         Connection sourceConn = null;
 
         try {
-            sourceConn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             setHadoopParams(globleHadoopParams, taskConfig, sourceConn, jobName);
@@ -567,7 +617,7 @@ public class HiveUtils {
         Connection sourceConn = null;
 
         try {
-            sourceConn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             setHadoopParams(globleHadoopParams, taskConfig, sourceConn, jobName);
@@ -687,7 +737,7 @@ public class HiveUtils {
                     taskConfig.getGroupName(), taskConfig.getTriggerName());
             logger.info(message);
 
-            conn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             if (conn == null) {
@@ -822,7 +872,7 @@ public class HiveUtils {
         Connection con = null;
         Statement stmt = null;
         try {
-            con = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            con = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(), 30);
             stmt = con.createStatement();
 
@@ -1003,7 +1053,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
             // String groupName = taskConfig.getGroupName();
             // if (!groupName.equals("gtp_kettle")) {// gtp_kettle组名的任务不设置
             setHadoopParams(globleHadoopParams, taskConfig, conn);
@@ -1312,7 +1362,7 @@ public class HiveUtils {
         String timeSubixStr = formatter.format(new Date());
         String bakTable = fullTable + "_del_bak" + timeSubixStr;
         try {
-            conn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(), 30);
 
             // 1.创建临时表和备份表，如果不存在
@@ -1422,7 +1472,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
             // conn = getConn1(); //得到数据连接
             stmt = conn.createStatement();
             boolean rs = stmt.execute(sql); // 执行sql结果
@@ -1443,7 +1493,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut); // 得到数据连接
             // conn = getConn1(); //得到数据连接
             stmt = conn.createStatement();
             int rs = stmt.executeUpdate(sql); // 执行sql结果
@@ -1536,7 +1586,7 @@ public class HiveUtils {
         Connection sourceConn = null;
 
         try {
-            sourceConn = getConn(taskConfig.getSourceDbEntity().getConnectionUrl(),
+            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(),taskConfig.getSourceDbEntity().getConnectionUrl(),
                     taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
                     jdbcTimeout);
             setHadoopParams(globleHadoopParams, taskConfig, sourceConn);
@@ -1780,7 +1830,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
             // String groupName = taskConfig.getGroupName();
             // if (!groupName.equals("gtp_kettle")) {// gtp_kettle组名的任务不设置
             setHadoopParams(globleHadoopParams, taskConfig, conn, remoteJobInvokeParamsDto, jobId);
@@ -1918,7 +1968,7 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
             // String groupName = taskConfig.getGroupName();
             // if (!groupName.equals("gtp_kettle")) {// gtp_kettle组名的任务不设置
             setHadoopParams(globleHadoopParams, taskConfig, conn, jobName);
