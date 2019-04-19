@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.FutureTask;
 
@@ -62,6 +63,14 @@ public class ApplicationsInfoThread implements Runnable {
             //通过http接口获取yarn中相关app信息
             //GET http://<rm http address:port>/ws/v1/cluster/apps
             Map<String, Object> stringObjectMap = null;
+
+            try {
+                //每次需要刷新查询时间
+                parmasMap.put("startedTimeBegin",DateUtils.getHeadDate(new Date(), -2).getTime());
+
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
 
             //1.获取yarn上相关信息
             logger.info("开始获取yarn上相关app信息：url=【{}】,parmasMap=[{}]", url, parmasMap.toString());
@@ -230,8 +239,9 @@ public class ApplicationsInfoThread implements Runnable {
         //获取重启bdp-dht时候的标志
 //        String isRestart = properties.getProperty("isRestart");
         Map<String, Object> param = new HashMap<>();
-        param.put("updateTime", new Date());
-//        param.put("updateTime", DateUtils.getHeadDate(new Date(), -48));
+//        param.put("updateTime", new Date());
+
+        param.put("updateTime", DateUtils.getHeadDate(new Date(), -48));
         //此处不能使用缓存数据，应该获取最新的application_message中的数据
         List<String> jobIdList = applicationInfoService.selectAllJobIdByParamsMap(param);
         if (null == jobIdList || 0 == jobIdList.size()) {
@@ -299,15 +309,22 @@ public class ApplicationsInfoThread implements Runnable {
 //
 //            }
 
+
+            if(null == jobStatusDto.getExecStatus()){
+                //非成功和失败，忽略,不通知调度
+                JedisUtils.set(jobId, "RUNNING", 60 * 60 * 1000);
+                continue;
+            }
+
             //监控到有变化的才通过消息队列通知调度系统
             String val = JedisUtils.get(jobId);
-            if (org.apache.commons.lang.StringUtils.isBlank(val) || !val.equalsIgnoreCase(jobStatusDto.getExecStatus().toString())) {
+            if (!val.equalsIgnoreCase(jobStatusDto.getExecStatus().toString())) {
                 //为空或则与当前的状态不一致，则通知调度
                 jmsClusterMgr.sendQueueMsg(MessageConstant.DC_SCHEDULER_JOB_QUEUE, jobStatusDto);
                 logger.info("yarn上的任务状态已发生改变，通知调度系统。由【" + val + "】转变为【" + jobStatusDto.getExecStatus() + "】");
             }
 
-            JedisUtils.set(jobId, jobStatusDto.getExecStatus()==null?"":jobStatusDto.getExecStatus().toString(), 60 * 60 * 1000);
+            JedisUtils.set(jobId, jobStatusDto.getExecStatus().toString(), 60 * 60 * 1000);
 
         }
 
