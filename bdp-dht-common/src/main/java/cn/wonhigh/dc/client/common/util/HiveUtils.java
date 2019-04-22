@@ -1571,166 +1571,6 @@ public class HiveUtils {
     }
 
 
-    public static void removeDuplicate3(TaskPropertiesConfig taskConfig, String globleHadoopParams, Integer jdbcTimeout,
-                                        Integer selectPreMonth, Date... timeSpan) throws Exception {
-        /*
-         * 初始化变量
-         */
-        String targetTableName = taskConfig.getTargetTable(); // 清洗的ods表
-        String sourceTableName = taskConfig.getSourceTable();// src表
-        String startTime = null;// 开始时间
-        String endTime = null;// 结束时间
-        String partition_date = HiveDefinePartNameEnum.PARTITION_DATE_NAME.getValue();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-        if (timeSpan.length != 2) {
-            throw new IllegalArgumentException("数据去重失败: 非法参数，需要制定开始和结束时间");
-        }
-        startTime = sdf.format(timeSpan[0]);
-        endTime = sdf.format(timeSpan[1]);
-        //获取清洗月份
-        List<String> cleanMonthRange = DateUtils.getMonthsByBeginAndEnd(timeSpan[0], timeSpan[1], "yyyyMMdd");
-        logger.info(
-                "去重时间范围: { " + DateUtils.formatDatetime(startTime) + " - " + DateUtils.formatDatetime(endTime) + " }");
-        //获取清洗的占位sql语句
-        String placeholderSQL = cleanPlaceholderSQL(taskConfig, cleanMonthRange);
-        placeholderSQL = placeholderSQL.replaceAll("src_t.", "");
-        List<String> timeColumns = taskConfig.getSyncTimeColumn();// 增量时间字段
-        if (timeColumns == null || timeColumns.size() == 0) {
-            throw new IllegalArgumentException("数据去重失败: 非法参数，没有指定增量时间字段");
-        }
-
-        List<String> pkColumns = taskConfig.getPrimaryKeys();// 主键字段
-        if (pkColumns == null || pkColumns.size() == 0) {
-            throw new IllegalArgumentException("数据去重失败: 非法参数，没有指定主键");
-        }
-
-        Connection sourceConn = null;
-
-        try {
-            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getSourceDbEntity().getConnectionUrl(),
-                    taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
-                    jdbcTimeout);
-            setHadoopParams(globleHadoopParams, taskConfig, sourceConn);
-            logger.info(String.format("=======>增量去重逻辑部分：【dbName=%s】【tableName=%s】【uniqueKeys=%s】【url=%s】",
-                    taskConfig.getSourceDbEntity().getDbName(), targetTableName, taskConfig.getPrimaryKeysStr(),
-                    taskConfig.getSourceDbEntity().getConnectionUrl()));
-
-            /**
-             * 清洗的月份计算
-             */
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(timeSpan[0]);
-            calendar.add(Calendar.MONTH, -selectPreMonth);
-            String startMonth = new SimpleDateFormat("yyyyMM").format(calendar.getTime());
-            String endMonth = new SimpleDateFormat("yyyyMM").format(timeSpan[1]);
-
-            // 1.将去重后的数据回写到去重表
-
-            StringBuilder keyStrs = new StringBuilder();
-            StringBuilder keyThlStrs = new StringBuilder();
-            for (String key : taskConfig.getPrimaryKeys()) {
-                keyStrs.append(" and src_t." + key + " = stn." + key);
-            }
-            // THL中捕获联合主键时，采用逗号连接各个值（要保证xml中的primaryKey联合主键顺序与binlogCapture中的一致）
-            if (taskConfig.getPrimaryKeys().size() > 1) {
-                keyThlStrs.append(" and concat(src_t.")
-                        .append(taskConfig.getPrimaryKeysStr().replace(",", ",',',src_t.")).append(")")
-                        .append(" = rgibt.").append(HiveDefinePartNameEnum.CDC_TABLE_ID_COLUMN_VALUE.getValue());
-            } else {
-                keyThlStrs.append(" and src_t.").append(taskConfig.getPrimaryKeysStr()).append(" = rgibt.")
-                        .append(HiveDefinePartNameEnum.CDC_TABLE_ID_COLUMN_VALUE.getValue());
-            }
-            String cleanColumnsStr = taskConfig.getSelectColumnsStr();
-            String cleanPkColumn = cleanColumnsStr.split(",")[0];
-            // 1.清洗环节
-            StringBuilder hql = new StringBuilder();
-            hql.append("insert overwrite TABLE ").append(taskConfig.getTargetDbEntity().getDbName()).append(".")
-                    .append(targetTableName).append(" partition(")
-                    .append(HiveDefinePartNameEnum.PARTITION_DATE_NAME.getValue()).append(") select ")
-                    .append(cleanColumnsStr.replace("src_t.partition_date",
-                            "date_format(src_t." + taskConfig.getSyncTimeColumn().get(0)))
-                    .append(",'yyyyMM') as partition_date from ").append(taskConfig.getTargetDbEntity().getDbName())
-                    .append(".").append(targetTableName).append(" src_t left join ")
-                    .append(taskConfig.getSourceDbEntity().getDbName()).append(".").append(sourceTableName)
-                    .append(" stn on (stn.").append(partition_date).append(" >= '").append(startTime)
-                    .append("' and stn.").append(partition_date).append(" <= '").append(endTime).append("' ")
-                    .append(keyStrs).append(" ) left join ").append(taskConfig.getSourceDbEntity().getDbName())
-                    .append(".")
-                    .append(sourceTableName.replace(HiveDefinePartNameEnum.SRC_TABLE_NAME_SUBFIX.getValue(),
-                            HiveDefinePartNameEnum.THL_TABLE_NAME_SUBFIX.getValue()))
-                    .append(" rgibt on (rgibt.").append(partition_date).append(" >= ").append(startTime)
-                    .append(" and rgibt.").append(partition_date).append(" <= ").append(endTime).append(" ")
-                    .append(keyThlStrs).append(" ) where src_t.").append(partition_date).append(" >= ")
-                    .append(startMonth).append(" and src_t.").append(partition_date).append(" <= ").append(endMonth)
-                    .append(" and stn.").append(taskConfig.getPrimaryKeys().get(0)).append(" is null and rgibt.")
-                    .append(HiveDefinePartNameEnum.CDC_TABLE_ID_COLUMN_VALUE.getValue()).append(" is null ")
-                    .append(taskConfig.getFilterConditionsStr())
-                    //过滤占位记录
-                    .append("and " + cleanPkColumn + " not in (-999999)").append(" union all select ")
-                    .append(taskConfig.getSelectColumnsStr()).append(" from (select ")
-                    .append(taskConfig.getSelectColumnsStr().replace("src_t.partition_date",
-                            "date_format(src_t." + taskConfig.getSyncTimeColumn().get(0)))
-                    .append(",'yyyyMM') as partition_date,row_number() over(partition by ")
-                    .append(taskConfig.getPrimaryKeysStr()).append(" order by ")
-                    .append(taskConfig.getSyncTimeColumnStr()).append(" desc ) rm from ")
-                    .append(taskConfig.getSourceDbEntity().getDbName()).append(".").append(sourceTableName)
-                    .append(" src_t where src_t.").append(partition_date).append(" >= ").append(startTime)
-                    .append(" and src_t.").append(partition_date).append(" <= ").append(endTime).append(" ")
-                    .append(taskConfig.getFilterConditionsStr()).append(") src_t where src_t.rm = 1");
-
-
-            //hql.append("insert overwrite table test2.tb_partition partition(partition_date) select 1, 'aaaa' ,201707 ");
-
-
-            logger.info(String.format("1.进入去重表【%s】时的sql语句：【%s】", targetTableName, hql.append(placeholderSQL).toString()));
-
-            PreparedStatement hqlStatement = sourceConn.prepareStatement(hql.toString());
-            executeHiveStatementAndClose(hqlStatement);
-
-            logger.info(String.format("----ODS表【%s】清洗完成！", targetTableName));
-
-        } catch (Throwable e) {
-            logger.error("数据去重失败: " + e.getMessage());
-            throw new SQLException(e);
-        } finally {
-            closeHiveConnectionQuietly(sourceConn);
-        }
-    }
-
-    /**
-     * @param taskConfig 任务配置信息
-     * @param cleanRange 清洗范围
-     * @return
-     */
-    public static String cleanPlaceholderSQL(TaskPropertiesConfig taskConfig, List<String> cleanRange) {
-        //获取清洗字段
-        String cleanColumnsStr = taskConfig.getSelectColumnsStr();
-        StringBuilder specialSQL = new StringBuilder();
-        if (null != cleanColumnsStr) {
-            String[] cleanColumnsArr = cleanColumnsStr.split(",");
-            for (String cleanMonth : cleanRange) {
-                specialSQL.append(" union all select ");
-                for (int i = 0; i < cleanColumnsArr.length; i++) {
-                    if (i == 0) {
-                        specialSQL.append("-999999 as " + cleanColumnsArr[i] + ",");
-                    } else if (cleanColumnsArr[i].trim().startsWith("from_unixtime")) {
-                        continue;
-                    } else if (cleanColumnsArr[i].trim().contains("ods_update_time")) {
-                        specialSQL.append("null as ods_update_time ,");
-                    } else if (!cleanColumnsArr[i].equals("src_t.partition_date")) {
-                        specialSQL.append("null as " + cleanColumnsArr[i] + ",");
-                    } else {
-                        specialSQL.append(cleanMonth + " as " + cleanColumnsArr[i]);
-                    }
-                }
-            }
-            return specialSQL.toString();
-        } else {
-            logger.error("数据去重失败: " + new Exception());
-        }
-        return "";
-    }
-
     public static Map<String, String> generateSqoopProperties(String exportParams) {
         Map<String, String> res = new HashMap<String, String>();
         if (exportParams.contains(",")) {
@@ -2130,6 +1970,7 @@ public class HiveUtils {
         String impaladIp = properties.getProperty("impalad.ip");
         String impaladPort = properties.getProperty("impalad.port");
         String imapalaUrl = generateImpalaUrl(impaladIp, impaladPort, dbName);
+        logger.info(String.format("连接impalad更新元数据,URL=【%s】", imapalaUrl));
         String imapalaSql = "refresh " + tableName;
         try {
             conn = DriverManager.getConnection(imapalaUrl, "hive", "123456");
@@ -2155,7 +1996,7 @@ public class HiveUtils {
      */
     private static String generateImpalaUrl(String impaladIp, String impaladPort, String dbName) {
         StringBuilder builder = new StringBuilder();
-        String fixStr = ";AuthMech=3;UID=hive;PWD=hive123;UseSasl=0";
+        String fixStr = ";AuthMech=3;UID=bdp_app;PWD=hive123;UseSasl=0";
         builder.append("jdbc:impala://")
                 .append(impaladIp)
                 .append(":")
@@ -2163,5 +2004,219 @@ public class HiveUtils {
                 .append("/").append(dbName)
                 .append(fixStr);
         return builder.toString();
+    }
+
+
+    public static void removeDuplicate3(String jobName, TaskPropertiesConfig taskConfig, String globleHadoopParams, Integer jdbcTimeout,
+                                        Integer selectPreMonth, Date... timeSpan) throws Exception {
+        /*
+         * 初始化变量
+         */
+        String targetTableName = taskConfig.getTargetTable(); // 清洗的ods表
+        String sourceTableName = taskConfig.getSourceTable();// src表
+        String startTime = null;// 开始时间
+        String endTime = null;// 结束时间
+        String partition_date = HiveDefinePartNameEnum.PARTITION_DATE_NAME.getValue();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        if (timeSpan.length != 2) {
+            throw new IllegalArgumentException("数据去重失败: 非法参数，需要制定开始和结束时间");
+        }
+        startTime = sdf.format(timeSpan[0]);
+        endTime = sdf.format(timeSpan[1]);
+        logger.info(
+                "去重时间范围: { " + DateUtils.formatDatetime(startTime) + " - " + DateUtils.formatDatetime(endTime) + " }");
+
+        List<String> timeColumns = taskConfig.getSyncTimeColumn();// 增量时间字段
+        if (timeColumns == null || timeColumns.size() == 0) {
+            throw new IllegalArgumentException("数据去重失败: 非法参数，没有指定增量时间字段");
+        }
+
+        List<String> pkColumns = taskConfig.getPrimaryKeys();// 主键字段
+        if (pkColumns == null || pkColumns.size() == 0) {
+            throw new IllegalArgumentException("数据去重失败: 非法参数，没有指定主键");
+        }
+
+        Connection sourceConn = null;
+
+        try {
+            sourceConn = getConn(taskConfig.getTargetDbEntity().getDbName(), taskConfig.getSourceDbEntity().getConnectionUrl(),
+                    taskConfig.getSourceDbEntity().getUserName(), taskConfig.getSourceDbEntity().getPassword(),
+                    jdbcTimeout);
+            setHadoopParams(globleHadoopParams, taskConfig, sourceConn, jobName);
+            logger.info(String.format("=======>增量去重逻辑部分：【dbName=%s】【tableName=%s】【uniqueKeys=%s】【url=%s】",
+                    taskConfig.getSourceDbEntity().getDbName(), targetTableName, taskConfig.getPrimaryKeysStr(),
+                    taskConfig.getSourceDbEntity().getConnectionUrl()));
+
+            /**
+             * 清洗的月份计算
+             */
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(timeSpan[0]);
+            calendar.add(Calendar.MONTH, -selectPreMonth);
+            String startMonth = new SimpleDateFormat("yyyyMM").format(calendar.getTime());
+            String endMonth = new SimpleDateFormat("yyyyMM").format(timeSpan[1]);
+
+            //获取清洗月份
+            List<String> cleanMonthRange = DateUtils.getMonthsByBeginAndEnd(calendar.getTime(), timeSpan[1], "yyyyMMdd");
+            //获取清洗的占位sql语句
+            String placeholderSQL = cleanPlaceholderSQL3(taskConfig, cleanMonthRange);
+            placeholderSQL = placeholderSQL.replaceAll("src_t.", "");
+
+            // 1.将去重后的数据回写到去重表
+
+            StringBuilder keyStrs = new StringBuilder();
+            StringBuilder keyThlStrs = new StringBuilder();
+            for (String key : taskConfig.getPrimaryKeys()) {
+                keyStrs.append(" and src_t." + key + " = stn." + key);
+            }
+            // THL中捕获联合主键时，采用逗号连接各个值（要保证xml中的primaryKey联合主键顺序与binlogCapture中的一致）
+            if (taskConfig.getPrimaryKeys().size() > 1) {
+                keyThlStrs.append(" and concat(src_t.")
+                        .append(taskConfig.getPrimaryKeysStr().replace(",", ",',',src_t.")).append(")")
+                        .append(" = rgibt.").append(HiveDefinePartNameEnum.CDC_TABLE_ID_COLUMN_VALUE.getValue());
+            } else {
+                keyThlStrs.append(" and src_t.").append(taskConfig.getPrimaryKeysStr()).append(" = rgibt.")
+                        .append(HiveDefinePartNameEnum.CDC_TABLE_ID_COLUMN_VALUE.getValue());
+            }
+            String cleanColumnsStr = taskConfig.getSelectColumnsStr();
+            // 1.清洗环节
+            StringBuilder hql = new StringBuilder();
+            hql.append("insert overwrite TABLE ").append(taskConfig.getTargetDbEntity().getDbName()).append(".")
+                    .append(targetTableName).append(" partition(")
+                    .append(HiveDefinePartNameEnum.PARTITION_DATE_NAME.getValue()).append(") select ")
+                    .append(cleanColumnsStr.replace("src_t.partition_date",
+                            "date_format(src_t." + taskConfig.getSyncTimeColumn().get(0)))
+                    .append(",'yyyyMM') as partition_date from ").append(taskConfig.getTargetDbEntity().getDbName())
+                    .append(".").append(targetTableName).append(" src_t left join ")
+                    .append(taskConfig.getSourceDbEntity().getDbName()).append(".").append(sourceTableName)
+                    .append(" stn on (stn.").append(partition_date).append(" >= '").append(startTime)
+                    .append("' and stn.").append(partition_date).append(" <= '").append(endTime).append("' ")
+                    .append(keyStrs).append(" ) left join ").append(taskConfig.getSourceDbEntity().getDbName())
+                    .append(".")
+                    .append(sourceTableName.replace(HiveDefinePartNameEnum.SRC_TABLE_NAME_SUBFIX.getValue(),
+                            HiveDefinePartNameEnum.THL_TABLE_NAME_SUBFIX.getValue()))
+                    .append(" rgibt on (rgibt.").append(partition_date).append(" >= ").append(startTime)
+                    .append(" and rgibt.").append(partition_date).append(" <= ").append(endTime).append(" ")
+                    .append(keyThlStrs).append(" ) where src_t.").append(partition_date).append(" >= ")
+                    .append(startMonth).append(" and src_t.").append(partition_date).append(" <= ").append(endMonth)
+                    .append(" and stn.").append(taskConfig.getPrimaryKeys().get(0)).append(" is null and rgibt.")
+                    .append(HiveDefinePartNameEnum.CDC_TABLE_ID_COLUMN_VALUE.getValue()).append(" is null ")
+                    .append(taskConfig.getFilterConditionsStr())
+                    //过滤占位记录
+                    .append("and " + "ods_update_time" + " not in ('999999')").append(" union all select ")
+                    .append(taskConfig.getSelectColumnsStr()).append(" from (select ")
+                    .append(taskConfig.getSelectColumnsStr().replace("src_t.partition_date",
+                            "date_format(src_t." + taskConfig.getSyncTimeColumn().get(0)))
+                    .append(",'yyyyMM') as partition_date,row_number() over(partition by ")
+                    .append(taskConfig.getPrimaryKeysStr()).append(" order by ")
+                    .append(taskConfig.getSyncTimeColumnStr()).append(" desc ) rm from ")
+                    .append(taskConfig.getSourceDbEntity().getDbName()).append(".").append(sourceTableName)
+                    .append(" src_t where src_t.").append(partition_date).append(" >= ").append(startTime)
+                    .append(" and src_t.").append(partition_date).append(" <= ").append(endTime).append(" ")
+                    .append(taskConfig.getFilterConditionsStr()).append(") src_t where src_t.rm = 1");
+
+
+            //hql.append("insert overwrite table test2.tb_partition partition(partition_date) select 1, 'aaaa' ,201707 ");
+
+
+            logger.info(String.format("1.进入去重表【%s】时的sql语句：【%s】", targetTableName, hql.append(placeholderSQL).toString()));
+
+            PreparedStatement hqlStatement = sourceConn.prepareStatement(hql.toString());
+            executeHiveStatementAndClose(hqlStatement);
+
+            logger.info(String.format("----ODS表【%s】清洗完成！", targetTableName));
+
+        } catch (Throwable e) {
+            logger.error("数据去重失败: " + e.getMessage());
+            throw new SQLException(e);
+        } finally {
+            closeHiveConnectionQuietly(sourceConn);
+        }
+    }
+
+
+    /**
+     * 清洗占位符SQL(主键为占位符字段)
+     *
+     * @param taskConfig 任务配置信息
+     * @param cleanRange 清洗范围
+     * @return
+     */
+    public static String cleanPlaceholderSQL2(TaskPropertiesConfig taskConfig, List<String> cleanRange) {
+        //获取清洗字段
+        String cleanColumnsStr = taskConfig.getSelectColumnsStr();
+        String primaryKeysStr = taskConfig.getPrimaryKeysStr();
+        StringBuilder specialSQL = new StringBuilder();
+        if (null != cleanColumnsStr) {
+            String[] cleanColumnsArr = cleanColumnsStr.split("(?<!\\)),");
+            for (String cleanMonth : cleanRange) {
+                specialSQL.append(" union all select ");
+                for (String asStr : cleanColumnsArr) {
+                    if (asStr.matches(".*\\sas\\s.*")) {
+                        String[] asStrs = asStr.split("as");
+                        specialSQL.append("null as " + asStrs[1].trim() + ",");
+                    } else {
+                        asStr = asStr.replaceAll("src_t.", "").trim();
+                        if (primaryKeysStr.contains(asStr)) {
+                            specialSQL.append("'999999' as " + asStr + ",");
+                        } else if (asStr.equalsIgnoreCase("partition_date")) {
+                            specialSQL.append("'" + cleanMonth + "'" + " as partition_date");
+                        } else {
+                            specialSQL.append("null as " + asStr + ",");
+                        }
+                    }
+                }
+            }
+            return specialSQL.toString();
+        } else {
+            logger.error("拼装占位符SQL异常: " + new Exception());
+            return "";
+        }
+    }
+
+
+    /**
+     * 清洗占位符SQL(ods_update_time为占位符字段)
+     *
+     * @param taskConfig 任务配置信息
+     * @param cleanRange 清洗范围
+     * @return
+     */
+    public static String cleanPlaceholderSQL3(TaskPropertiesConfig taskConfig, List<String> cleanRange) {
+        //获取清洗字段
+        String cleanColumnsStr = taskConfig.getSelectColumnsStr();
+        StringBuilder specialSQL = new StringBuilder();
+        if (null != cleanColumnsStr) {
+            String[] cleanColumnsArr = cleanColumnsStr.split("(?<!\\)),");
+            for (String cleanMonth : cleanRange) {
+                specialSQL.append(" union all select ");
+                for (String asStr : cleanColumnsArr) {
+                    System.out.println(asStr);
+                    //判断以as 分割
+                    if (asStr.matches(".*\\sas\\s.*")) {
+                        String[] asStrs = asStr.split("as");
+                        String trim = asStrs[1].trim();
+                        if (trim.equalsIgnoreCase("ods_update_time")) {
+                            specialSQL.append("'999999' as " + trim + ",");
+                        } else {
+                            specialSQL.append("null as " + trim.trim() + ",");
+                        }
+                    } else {
+                        asStr = asStr.replaceAll("src_t.", "").trim();
+                        if (asStr.equalsIgnoreCase("ods_update_time")) {
+                            specialSQL.append("'999999' as " + asStr + ",");
+                        } else if (asStr.equalsIgnoreCase("partition_date")) {
+                            specialSQL.append("'" + cleanMonth + "'" + " as partition_date");
+                        } else {
+                            specialSQL.append("null as " + asStr + ",");
+                        }
+                    }
+                }
+            }
+            return specialSQL.toString();
+        } else {
+            logger.error("拼装占位符SQL异常: " + new Exception());
+            return "";
+        }
     }
 }
