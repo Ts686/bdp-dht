@@ -21,7 +21,7 @@
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
     </resultMap>
     <sql id="Base_Column_List">
-        id, app_id, app_name, state, schedule_id, instanceId, subInstanceId, create_user,
+        id, app_id, app_name, state, finalStatus,schedule_id, instanceId, subInstanceId, create_user,
         create_user_id, create_time, update_user, update_time
     </sql>
 
