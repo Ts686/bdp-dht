@@ -117,15 +117,17 @@ public class HiveUtils {
      * @throws SQLException
      */
     public static Connection getConn(String dbName, String url, String user, String passwd, Integer jdbcTimeout) throws SQLException {
-        logger.info("获取Hive JDBC连接信息: " + url);
+        logger.info("获取Hive JDBC连接信息: " + url+" dbName="+dbName);
         // DriverManager.setLoginTimeout(jdbcTimeout);
 
         Connection connectionFromDruid = null;
         //根据数据库名称动态选择连接池
-        if ("dc_src".equalsIgnoreCase(dbName)) {
+        if (url.contains("dc_src")) {
             connectionFromDruid = getConnectionFromDruid(dataSourceSrc);
-        } else if ("dc_ods".equalsIgnoreCase(dbName)) {
+            logger.info("获取dc_src的hive连接池连接");
+        } else if (url.contains("dc_ods")) {
             connectionFromDruid = getConnectionFromDruid(dataSourceOds);
+            logger.info("获取dc_ods的hive连接池连接");
         }
 
         if (null != connectionFromDruid) {
@@ -156,7 +158,6 @@ public class HiveUtils {
 
         String jdbcUser = "hive";
         String jdbcPassword = "123456";
-        logger.info("druid连接池中获取hive连接失败，直接创建connection");
 
         return DriverManager.getConnection(url, user == null ? jdbcUser : user, passwd == null ? jdbcPassword : passwd);
     }
@@ -1339,6 +1340,9 @@ public class HiveUtils {
     }
 
     public static void main(String[] args) throws Exception {
+        Connection conn = getConn("dc_src", "jdbc:hive2://10.240.20.20:10000/dc_src",
+                "hive", "123456", null);
+        System.out.println(conn);
 
 
 //        TaskPropertiesConfig taskConfig = new TaskPropertiesConfig();

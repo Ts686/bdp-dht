@@ -11,7 +11,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import cn.wonhigh.dc.client.common.constans.MessageConstant;
 import com.alibaba.druid.pool.DruidDataSource;
+import com.yougou.logistics.base.common.utils.EncryptionUtils;
 import org.apache.log4j.Logger;
 
 import cn.wonhigh.dc.client.common.model.TaskDatabaseConfig;
@@ -34,23 +36,38 @@ public class PgSqlUtils {
 	private static ResultSet rs=null;	
 
 	private static  Properties properties = null;
-	private static  DruidDataSource dataSource =null ;
+	private static  DruidDataSource dataSourceDcdb =null ;
+	private static  DruidDataSource dataSourceSports =null ;
 
 	static {
 		//初始化hive的durid线程池
 		properties = PropertyFile.getProps("");
-		dataSource = new DruidDataSource();
+		dataSourceDcdb = new DruidDataSource();
 
-		dataSource.setUrl(properties.getProperty("postgresql.db.url"));
-		dataSource.setDriverClassName(properties.getProperty("postgresql.db.driverClass"));
-		dataSource.setUsername(properties.getProperty("postgresql.db.username"));
-		dataSource.setPassword(properties.getProperty("postgresql.db.password"));
-		dataSource.setTestWhileIdle(Boolean.valueOf(properties.getProperty("hive.testWhileIdle")));
-		dataSource.setValidationQuery(properties.getProperty("hive.validationQuery"));
-		dataSource.setMaxActive(Integer.valueOf(properties.getProperty("hive.max.active")));
-		dataSource.setInitialSize(Integer.valueOf(properties.getProperty("hive.initialSize")));
-		dataSource.setRemoveAbandoned(Boolean.valueOf(properties.getProperty("hive.removeAbandoned")));
-		dataSource.setRemoveAbandonedTimeout(Integer.valueOf(properties.getProperty("hive.removeAbandonedTimeout")));
+		dataSourceDcdb.setUrl(properties.getProperty("postgresql.db.url.dcdb"));
+		dataSourceDcdb.setDriverClassName(properties.getProperty("postgresql.db.driverClass"));
+		dataSourceDcdb.setUsername(properties.getProperty("postgresql.db.dcdb.username"));
+		dataSourceDcdb.setPassword(properties.getProperty("postgresql.db.dcdb.password"));
+		dataSourceDcdb.setTestWhileIdle(Boolean.valueOf(properties.getProperty("hive.testWhileIdle")));
+		dataSourceDcdb.setValidationQuery(properties.getProperty("hive.validationQuery"));
+		dataSourceDcdb.setMaxActive(Integer.valueOf(properties.getProperty("hive.max.active")));
+		dataSourceDcdb.setInitialSize(Integer.valueOf(properties.getProperty("hive.initialSize")));
+		dataSourceDcdb.setRemoveAbandoned(Boolean.valueOf(properties.getProperty("hive.removeAbandoned")));
+		dataSourceDcdb.setRemoveAbandonedTimeout(Integer.valueOf(properties.getProperty("hive.removeAbandonedTimeout")));
+
+		dataSourceSports = new DruidDataSource();
+		dataSourceSports.setUrl(properties.getProperty("postgresql.db.url.sports"));
+		dataSourceSports.setDriverClassName(properties.getProperty("postgresql.db.driverClass"));
+		dataSourceSports.setUsername(properties.getProperty("postgresql.db.sports.username"));
+		dataSourceSports.setPassword(properties.getProperty("postgresql.db.sports.password"));
+		dataSourceSports.setTestWhileIdle(Boolean.valueOf(properties.getProperty("hive.testWhileIdle")));
+		dataSourceSports.setValidationQuery(properties.getProperty("hive.validationQuery"));
+		dataSourceSports.setMaxActive(Integer.valueOf(properties.getProperty("hive.max.active")));
+		dataSourceSports.setInitialSize(Integer.valueOf(properties.getProperty("hive.initialSize")));
+		dataSourceSports.setRemoveAbandoned(Boolean.valueOf(properties.getProperty("hive.removeAbandoned")));
+		dataSourceSports.setRemoveAbandonedTimeout(Integer.valueOf(properties.getProperty("hive.removeAbandonedTimeout")));
+
+
 	}
 
 	/**
@@ -74,14 +91,25 @@ public class PgSqlUtils {
 
 	public static Connection getConn(String url, String user, String passwd)
 			throws SQLException {
-		//logger.debug("postsql JDBC连接信息: " + url);
-		//DriverManager.setLoginTimeout(jdbcTimeout);
-		Connection connection = getPostgresqlConnectionFromDruid(dataSource);
+		logger.debug("postsql JDBC连接信息: " + url);
+		Connection connection = null ;
+//		if(url.contains("sports_dc_rw")){
+//			connection = getPostgresqlConnectionFromDruid(dataSourceSports);
+//			logger.info("获取sports_dc_rw库的pg连接池连接");
+//
+//		}else if(url.contains("dc_db")){
+//			connection = getPostgresqlConnectionFromDruid(dataSourceDcdb);
+//			logger.info("获取dc_db库的pg连接池连接");
+//
+//		}
+
 		if(null != connection){
 			return connection;
 
 		}
 
+		logger.info("postsql连接池获取失败，直接创建连接");
+		DriverManager.setLoginTimeout(jdbcTimeout);
 		return DriverManager.getConnection(url, user == null ? jdbcUser : user, passwd == null ? "" : passwd);
 	}
 
@@ -211,24 +239,44 @@ public class PgSqlUtils {
 
 
 	public static void main(String[] args) throws Exception {
-		TaskPropertiesConfig taskConfig = new TaskPropertiesConfig();
-		List<String> list = new ArrayList<String>();
-		list.add("create_time");
-		// list.add("update_time");
-		taskConfig.setSyncTimeColumn(list);
-		// Hive 数据库连接信息
-		TaskDatabaseConfig dbConfig = new TaskDatabaseConfig();
-		dbConfig.setIpAddr("172.17.209.165");
-		dbConfig.setPort("5432");
-		dbConfig.setUserName("usr_dc_ods");
-		dbConfig.setPassword("usr_dc_ods");
-		dbConfig.setDbType(1);
-		dbConfig.setCharset("utf-8");
-		dbConfig.setDbName("dc_pg");
-		String tableName = "ztest";
-		//String[] uniqueKeys = new String[] { "group_no" };
-        simpleTest(dbConfig, tableName);
-		System.out.println(dbConfig.getConnectionUrl());
+//		TaskPropertiesConfig taskConfig = new TaskPropertiesConfig();
+//		List<String> list = new ArrayList<String>();
+//		list.add("create_time");
+//		// list.add("update_time");
+//		taskConfig.setSyncTimeColumn(list);
+//		// Hive 数据库连接信息
+//		TaskDatabaseConfig dbConfig = new TaskDatabaseConfig();
+//		dbConfig.setIpAddr("172.17.209.165");
+//		dbConfig.setPort("5432");
+//		dbConfig.setUserName("usr_dc_ods");
+//		dbConfig.setPassword("usr_dc_ods");
+//		dbConfig.setDbType(1);
+//		dbConfig.setCharset("utf-8");
+//		dbConfig.setDbName("dc_pg");
+//		String tableName = "ztest";
+//		//String[] uniqueKeys = new String[] { "group_no" };
+//        simpleTest(dbConfig, tableName);
+//		System.out.println(dbConfig.getConnectionUrl());
+
+		Connection postgresqlConnectionFromDruid = getPostgresqlConnectionFromDruid(dataSourceDcdb);
+		System.out.println(postgresqlConnectionFromDruid);
+
+
+		Connection sp = getPostgresqlConnectionFromDruid(dataSourceSports);
+		System.out.println(sp);
+
+//		Connection conn1 = getConn("jdbc:postgresql://10.240.12.21:5432/dc_db",
+//				"usr_dc_ods", "ScTLNUXy");
+//		System.out.println(conn1);
+//
+//		Connection conn2 = getConn("jdbc:postgresql://10.240.12.38:5432/dc_sports",
+//				"sports_dc_rw", "aUhyT78I");
+//		System.out.println(conn2);
+
+//		Connection conn = getConn("jdbc:postgresql://172.17.209.1:5432/postgres",
+//				"postgres", "Pg2018J");
+//		System.out.println(conn);
+
 
 	}
 
