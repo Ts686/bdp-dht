@@ -474,7 +474,7 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
                     } else if (taskConfig.getSyncType() != null
                             && taskConfig.getSyncType().equals(SyncTypeEnum.SYNC_TYPE_2.getValue())) {
 
-                        HiveUtils.removeDuplicate2(jobName,
+                        HiveUtils.removeDuplicate3(jobName,
                                 taskConfig,
                                 hadoopClndParams,
                                 Integer.valueOf(jdbcTimeout),
