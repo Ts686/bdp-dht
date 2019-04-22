@@ -300,7 +300,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 logger.info(String.format("从对应%s-%s.xml文件中读取信息： 导出方式【%s】", taskConfig.getGroupName(),
                         taskConfig.getTriggerName(), openExpDirect));
             } else {
-                logger.info(String.format("从对应bdp-dht.properties文件中读取信息：导出方式【%s】", openExpDirect));
+                logger.info(String.format("从对应dc-client.properties文件中读取信息：导出方式【%s】", openExpDirect));
             }
 
             if (openExpDirect == 1) {
@@ -326,7 +326,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                     if (paras.keySet().contains("--escaped-by") && paras.keySet().contains("--enclosed-by")
                             && !options.contains("--direct")) {
                         logger.warn(String
-                                .format(" 导出开关为：Direct = 0 仅在bdp-dht.properties中配置【escaped-by】【enclosed-by】未在【 %s-%s.xml 】中配置,因此移除【escaped-by】【enclosed-by】",
+                                .format(" 导出开关为：Direct = 0 仅在dc-client.properties中配置【escaped-by】【enclosed-by】未在【 %s-%s.xml 】中配置,因此移除【escaped-by】【enclosed-by】",
                                         taskConfig.getGroupName(), taskConfig.getTriggerName()));
                         paras.remove("--escaped-by");
                         paras.remove("--enclosed-by");
@@ -556,7 +556,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
             logger.info(String.format("从对应%s-%s.xml文件中读取信息：%s 【%d】天", taskConfig.getGroupName(),
                     taskConfig.getTriggerName(), message, preserveDate));
         } else {
-            logger.info(String.format("从对应bdp-dht.properties文件中读取信息：%s 【%d】天", message, preserveDate));
+            logger.info(String.format("从对应dc-client.properties文件中读取信息：%s 【%d】天", message, preserveDate));
         }
         // 设置导出的起始日期从当前时间向上追述  preserveDate 天
         calendar.add(Calendar.DATE, -preserveDate);
@@ -634,7 +634,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
             logger.info(String.format("从对应%s-%s.xml文件中读取信息：%s 【%s】", taskConfig.getGroupName(),
                     taskConfig.getTriggerName(), message, mapNumEx));
         } else {
-            logger.info(String.format("从对应bdp-dht.properties文件中读取信息：%s 【%s】", message, mapNumEx));
+            logger.info(String.format("从对应dc-client.properties文件中读取信息：%s 【%s】", message, mapNumEx));
         }
         paras.put("-m", mapNumEx);
         String exportPrefix = getExportPrefix(taskConfig.getTriggerName());

@@ -72,7 +72,7 @@ public class StartMain {
                 logger.info("在启动过程中加载： groupName：【 " + groupName + "】 targetName：【" + triggerName + "】");
                 TaskPropertiesConfig taskConfig = ParseXMLFileUtil.getTaskConfig(groupName, triggerName);
                 if (taskConfig == null) {
-                    String message = "获取bdp-dht.properties中的cdc.table.list 列表的第一项【groupName：%s】【triggerName：%s】hive的jdbc信息失败，" +
+                    String message = "获取dc-client.properties中的cdc.table.list 列表的第一项【groupName：%s】【triggerName：%s】hive的jdbc信息失败，" +
                             "请检测是否配置该项，多项间用逗号分割";
                     logger.error(String.format("%s：【groupName：%s】【triggerName：%s】", message, groupName, triggerName));
                 } else {
@@ -87,7 +87,7 @@ public class StartMain {
                     calendar.add(Calendar.YEAR, -1);
                     Date startTimer = calendar.getTime();
 //                    HiveUtils.updateTransactionHisLog(taskConfig, null, startTimer, endTime, null, 6000, true);
-                    String message = String.format("依据bdp-dht.properties中的cdc.table.list 列表中的第一项【groupName：%s】【triggerName：%s】" +
+                    String message = String.format("依据dc-client.properties中的cdc.table.list 列表中的第一项【groupName：%s】【triggerName：%s】" +
                             "获取hive的jdbc连接信息", groupName, triggerName, groupName + "-" + triggerName);
                     logger.info(message);
                 }
