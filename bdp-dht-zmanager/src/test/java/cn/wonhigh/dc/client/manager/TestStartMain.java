@@ -55,7 +55,7 @@ public class TestStartMain {
 //            ParseXMLFileUtil.initTask();
             logger.info("---------------------更新redis中任务及数据库信息---------------------");
             logger.info(String.format("【当前任务个数%s个,数据库信息%s个】", ParseXMLFileUtil.getCacheTaskEntitiesKeys().size(), ParseXMLFileUtil.getCacheDbEntities().size()));
-            ParseXMLFileUtil.initTaskByRedis();
+            ParseXMLFileUtil.initTaskByRedis(properties);
             logger.info("---------------------更新完成---------------------");
             logger.info(String.format("【redis加载完成:任务个数%s个,数据库信息%s个】", ParseXMLFileUtil.getCacheTaskEntitiesKeys().size(), ParseXMLFileUtil.getCacheDbEntities().size()));
 //            ParseProXMLFileUtil.initTask();
@@ -157,7 +157,7 @@ public class TestStartMain {
             ApplicationInfoService applicationInfoService = (ApplicationInfoService) ctx.getBean("applicationInfoService");
 
 
-            Map<String,String> map = new HashMap<>();
+            Map<String, String> map = new HashMap<>();
             map.put("jobId", "ecf4bbd9ffb011e94ed29f56975612d0");
             List<ApplicationInfo> applicationInfosList = applicationInfoService.selectByParamsMap(map);
 
@@ -173,7 +173,7 @@ public class TestStartMain {
             int finishedCount = StringUtils.countStringContainSubString(temp, "state='FINISHED'");
             int succeededCount = StringUtils.countStringContainSubString(temp, "finalStatus='SUCCEEDED'");
 
-            logger.info("jobId=【{}】在yarn信息表状态总数：【{}】，包含有FINISHED状态总数：【{}】,任务本身SUCCEEDED总数：【{}】", "ecf4bbd9ffb011e94ed29f56975612d0", size, finishedCount,succeededCount);
+            logger.info("jobId=【{}】在yarn信息表状态总数：【{}】，包含有FINISHED状态总数：【{}】,任务本身SUCCEEDED总数：【{}】", "ecf4bbd9ffb011e94ed29f56975612d0", size, finishedCount, succeededCount);
 
 
 //            ecf4bbd9ffb011e94ed29f56975612d0

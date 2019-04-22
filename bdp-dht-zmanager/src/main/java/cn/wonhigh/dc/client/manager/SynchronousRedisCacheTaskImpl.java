@@ -8,7 +8,6 @@ import cn.wonhigh.dc.client.manager.jms.SendMsg2AMQ;
 import cn.wonhigh.dc.client.service.ClientTaskStatusLogService;
 import cn.wonhigh.dc.client.service.jms.JmsClusterMgr;
 import com.yougou.logistics.base.common.enums.JobBizStatusEnum;
-import com.yougou.logistics.base.common.exception.ManagerException;
 import com.yougou.logistics.base.common.interfaces.RemoteJobServiceExtWithParams;
 import com.yougou.logistics.base.common.vo.scheduler.RemoteJobInvokeParamsDto;
 import org.apache.log4j.Logger;

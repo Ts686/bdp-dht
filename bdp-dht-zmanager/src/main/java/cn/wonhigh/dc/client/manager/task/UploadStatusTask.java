@@ -93,7 +93,8 @@ public class UploadStatusTask {
             logger.info("启动后【首次】心跳同步任务增全量信息...");
             syncOverwriteInfo(overwriteInfos);
             proprties.setProperty(MessageConstant.OVERWIRTE_HEARTBEAT_FIRST, "false");
-            logger.info(String.format("【首次】心跳同步任务增全量信息结束,同步数量：【%s】 个", overwriteInfos.size()));
+            logger.info(String.format("【首次】心跳同步任务增全量信息结束,同步数量：【%s】 个,队列名称:【%s】",
+                    overwriteInfos.size(), MessageConstant.DC_SCHEDULER_TRIGGERMSG_QUEUE));
         } else { //如果是运行时心跳,直接发送
             logger.info("心跳同步任务增全量信息...");
             ConcurrentMap<String, String> syncOverwriteInfo = ParseXMLFileUtil.getSyncOverwriteInfo();
@@ -101,7 +102,8 @@ public class UploadStatusTask {
                 logger.info("暂无任务更改增全量信息");
             } else {
                 syncOverwriteInfo(syncOverwriteInfo);
-                logger.info(String.format("心跳同步任务增全量信息结束,,同步数量：【%s】 个:【%s】", syncOverwriteInfo.size(), syncOverwriteInfo.keySet()));
+                logger.info(String.format("心跳同步任务增全量信息结束,同步数量：【%s】 个:【%s】，队列名称:【%s】",
+                        syncOverwriteInfo.size(), syncOverwriteInfo.keySet(), MessageConstant.DC_SCHEDULER_TRIGGERMSG_QUEUE));
                 syncOverwriteInfo.clear();
                 JedisUtils.setMap("TASK_OVERWRITE_INFO", overwriteInfos, 0);
             }
