@@ -656,6 +656,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                 } catch (Exception e) {
                     ManagerException managerException = new ManagerException("数据从txt类型的表转移至parquet失败.....");
                     jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
+                    addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, "数据从txt类型的表转移至parquet失败");
                     SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
                             ExceptionUtil.getStackTrace(managerException));
                 } finally {
@@ -671,6 +672,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                     } catch (Exception e) {
                         ManagerException managerException = new ManagerException("删除临时表失败.....");
                         jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
+                        addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, "删除临时表失败.....");
                         SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
                                 ExceptionUtil.getStackTrace(managerException));
                     }
