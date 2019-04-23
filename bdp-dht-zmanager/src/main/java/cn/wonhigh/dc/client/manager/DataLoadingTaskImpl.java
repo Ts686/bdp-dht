@@ -646,8 +646,13 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                     sbuBuffer.append(new SimpleDateFormat(DateFormatStrEnum.PARTITION_DATE_YYYY_MM_DD.getValue())
                             .format(syncBeginTime));
                     logger.info(String.format("转移txt表的数据至parquet中的sql【%s】", sbuBuffer.toString()));
-                    HiveUtils.execUpdate(taskConfig.getTargetDbEntity(), taskConfig, "", sbuBuffer.toString(), 30);
-
+                    String jobName = String.format("%s-%s-%s_%s", "hive", taskConfig.getGroupName(),
+                            taskConfig.getTriggerName(), System.currentTimeMillis());
+                    logger.info(String.format("数据回写开始,>>> SQL【%s ...】,任务名称【%s】",
+                            sbuBuffer.substring(0, 40), jobName));
+                    HiveUtils.execUpdate(taskConfig.getTargetDbEntity(),
+                            taskConfig, "", sbuBuffer.toString(), 30, jobName);
+                    logger.info(String.format("数据回写任务【%s】执行完成!", jobName));
                     //同步元数据到Impala Catalog
                     HiveUtils.syncMetaData4Impala(sbuBuffer.toString()
                             , taskConfig.getTargetDbEntity().getDbName(),

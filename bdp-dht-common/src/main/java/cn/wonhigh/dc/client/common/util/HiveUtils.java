@@ -117,7 +117,7 @@ public class HiveUtils {
      * @throws SQLException
      */
     public static Connection getConn(String dbName, String url, String user, String passwd, Integer jdbcTimeout) throws SQLException {
-        logger.info("获取Hive JDBC连接信息: " + url+" dbName="+dbName);
+        logger.info("获取Hive JDBC连接信息: " + url + " dbName=" + dbName);
         // DriverManager.setLoginTimeout(jdbcTimeout);
 
         Connection connectionFromDruid = null;
@@ -2132,7 +2132,7 @@ public class HiveUtils {
 
 
             logger.info(String.format("1.进入去重表【%s】时的sql语句：【%s】", targetTableName, hql.append(placeholderSQL).toString()));
-            logger.info(String.format("执行清洗SQL【%s】...任务开始,任务名称【%s】",
+            logger.info(String.format("执行清洗开始,>>> SQL【%s ...】,任务名称【%s】",
                     hql.substring(0, 20), jobName));
             PreparedStatement hqlStatement = sourceConn.prepareStatement(hql.toString());
             executeHiveStatementAndClose(hqlStatement);
