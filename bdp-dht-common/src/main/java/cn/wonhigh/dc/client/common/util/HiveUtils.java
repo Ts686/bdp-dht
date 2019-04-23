@@ -374,8 +374,13 @@ public class HiveUtils {
 
             logger.info(String.format("清空全量去重表【%s】时的sql语句：【%s】", fullTable, truncateFullTableSql));
             String selectColumns = taskConfig.getSelectColumnsStr();
+            String truncateJobName = String.format("%s-%s-%s_%s", "hive", taskConfig.getGroupName(),
+                    taskConfig.getTriggerName(), System.currentTimeMillis());
+            logger.info(String.format("清空目标表--->【%s】,任务名称【%s】",
+                    taskConfig.getTargetTable(), truncateJobName));
             PreparedStatement truncateFullTableStatement = conn.prepareStatement(truncateFullTableSql.toString());
             executeHiveStatementAndClose(truncateFullTableStatement);
+            logger.info(String.format("清空目标表任务【%s】执行完成!", truncateJobName));
             logger.info(String.format("Truncate 全量去重表【%s】成功", fullTable));
 
             //同步元数据到Impala Catalog
@@ -399,8 +404,11 @@ public class HiveUtils {
             createFullTableSql.append(taskConfig.getFilterConditionsStr());
 
             logger.info(String.format("开始向全量表【%s】插入数据，详细sql语句：【%s】", fullTable, createFullTableSql));
+            logger.info(String.format("向表【%s】回写数据,任务名称【%s】",
+                    taskConfig.getTargetTable(), jobName));
             PreparedStatement createFullTableStatement = conn.prepareStatement(createFullTableSql.toString());
             executeHiveStatementAndClose(createFullTableStatement);
+            logger.info(String.format("回写数据任务【%s】执行完成!", jobName));
 
             //同步元数据到Impala Catalog
             HiveUtils.syncMetaData4Impala(createFullTableSql.toString()
@@ -1075,7 +1083,8 @@ public class HiveUtils {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = getConn(taskConfig.getTargetDbEntity().getDbName(), dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
+            conn = getConn(taskConfig.getTargetDbEntity().getDbName(),
+                    dbConfig.getConnectionUrl(), dbConfig.getUserName(), dbConfig.getPassword(), jdbcTimeOut);
             // String groupName = taskConfig.getGroupName();
             // if (!groupName.equals("gtp_kettle")) {// gtp_kettle组名的任务不设置
             setHadoopParams(globleHadoopParams, taskConfig, conn);
@@ -1258,7 +1267,6 @@ public class HiveUtils {
                     // currentTime 开始日期
                     Calendar beginDate = Calendar.getInstance();
                     beginDate.setTime(date);
-                    String currentTime = format.format(date.getTime());
 
                     String jobName = String.format("%s-%s-%s_%s", keyValues[1].trim(), taskConfig.getGroupName(),
                             taskConfig.getTriggerName(), System.currentTimeMillis());
@@ -2124,10 +2132,11 @@ public class HiveUtils {
 
 
             logger.info(String.format("1.进入去重表【%s】时的sql语句：【%s】", targetTableName, hql.append(placeholderSQL).toString()));
-
+            logger.info(String.format("执行清洗SQL【%s】...任务开始,任务名称【%s】",
+                    hql.substring(0, 20), jobName));
             PreparedStatement hqlStatement = sourceConn.prepareStatement(hql.toString());
             executeHiveStatementAndClose(hqlStatement);
-
+            logger.info(String.format("执行清洗SQL任务【%s】执行完成!", jobName));
             logger.info(String.format("----ODS表【%s】清洗完成！", targetTableName));
 
         } catch (Throwable e) {

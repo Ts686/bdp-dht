@@ -336,8 +336,10 @@ public class CDCDataMoveTaskImpl implements RemoteJobServiceExtWithParams {
                 String jobName = String.format("%s-%s-%s_%s", "hive", taskConfig.getGroupName(),
                         taskConfig.getTriggerName(), System.currentTimeMillis());
                 saveAppInfo(remoteJobInvokeParamsDto, jobName, jobId);
+                logger.info(String.format("!!!数据分发任务开始执行，任务名称【%s】", jobName));
                 HiveUtils.execUpdate(taskConfig.getTargetDbEntity(), taskConfig, hadoopThlParams,
                         executeSQL, 30, jobName);
+                logger.info(String.format("数据分发任务【%s】执行完成!!!", jobName));
                 //同步元数据到Impala Catalog
                 HiveUtils.syncMetaData4Impala(executeSQL
                         , taskConfig.getTargetDbEntity().getDbName(),

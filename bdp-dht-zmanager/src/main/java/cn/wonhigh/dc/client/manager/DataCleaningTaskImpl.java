@@ -460,6 +460,8 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
                 SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
                 String jobName = String.format("%s-%s-%s_%s", "hive", taskConfig.getGroupName(),
                         taskConfig.getTriggerName(), System.currentTimeMillis());
+                logger.info(String.format("!!!数据清洗任务开始执行,groupName【%s】,taskName【%s】",
+                        groupName, triggerName));
                 saveAppInfo(remoteJobInvokeParamsDto, jobName, jobId);
                 if (taskConfig.getIsOverwrite() == 0) {
 
@@ -473,7 +475,6 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
                                         .getSelectPreMonth(), new Date[]{syncBeginTime, syncEndTime});
                     } else if (taskConfig.getSyncType() != null
                             && taskConfig.getSyncType().equals(SyncTypeEnum.SYNC_TYPE_2.getValue())) {
-
                         HiveUtils.removeDuplicate3(jobName,
                                 taskConfig,
                                 hadoopClndParams,
@@ -492,6 +493,7 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
                     HiveUtils.fullTableCleaningDate(remoteJobInvokeParamsDto, jobId, taskConfig,
                             hadoopClndParams, 30, jobName);
                 }
+                logger.info(String.format("数据清洗任务执行完成!!!,groupName【%s】,taskName【%s】", groupName, triggerName));
 
                 jobBizStatusEnum = JobBizStatusEnum.FINISHED;
                 message = "数据去重成功";

@@ -309,10 +309,13 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                             message = String.format("开始尝试创建txt类型的表【%s】【groupName：%s】【triggerName：%s】sql:【%s】",
                                     taskConfig.getTargetTable(), groupName, taskName, sbBuilder.toString());
                             logger.info(message);
-                            HiveUtils.execUpdate(taskConfig.getTargetDbEntity(),
+                            logger.info(String.format("!!!创建临时表任务开始执行,任务名称【%s】", jobName));
+                            boolean execUpdate = HiveUtils.execUpdate(taskConfig.getTargetDbEntity(),
                                     taskConfig, hiveJobNamePref, sbBuilder.toString(),
-                                    30, "");
-
+                                    30, jobName);
+                            if (execUpdate) {
+                                logger.info(String.format("创建临时表任务【%s】执行完成!!!", jobName));
+                            }
                             // 清空txt类型表的数据
                             sbBuilder = new StringBuilder();
                             sbBuilder.append("TRUNCATE TABLE ");
@@ -324,8 +327,13 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                             message = String.format("txt类型临时表全量表清空【groupName：%s】【triggerName：%s】sql:【%s】", groupName,
                                     taskName, sbBuilder.toString());
                             logger.info(message);
+                            jobName = String.format("%s-%s-%s_%s", "hive", taskConfig.getGroupName(),
+                                    taskConfig.getTriggerName(), System.currentTimeMillis());
+                            logger.info(String.format("清空目标表--->【%s】,任务名称【%s】",
+                                    taskConfig.getTargetTable(), jobName));
                             HiveUtils.execUpdate(taskConfig.getTargetDbEntity(), taskConfig, hiveJobNamePref, sbBuilder.toString(),
-                                    30);
+                                    30, jobName);
+                            logger.info(String.format("任务【%s】执行完成!", jobName));
                             HiveUtils.syncMetaData4Impala(sbBuilder.toString()
                                     , taskConfig.getTargetDbEntity().getDbName(), taskConfig.getTargetTable());
                         }
@@ -335,6 +343,10 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                         message = String.format("该任务是全量导入任务，首先要清空装载区内的数据【%s】【groupName：%s】【triggerName：%s】", sql,
                                 groupName, taskName);
                         logger.info(message);
+                        jobName = String.format("%s-%s-%s_%s", "hive", taskConfig.getGroupName(),
+                                taskConfig.getTriggerName(), System.currentTimeMillis());
+                        logger.info(String.format("清空目标表--->【%s】,任务名称【%s】",
+                                taskConfig.getTargetTable(), jobName));
                         Boolean overWriteTruncat = HiveUtils.execUpdate(taskConfig.getTargetDbEntity(), taskConfig, hiveJobNamePref,
                                 sql, 30);
                         if (overWriteTruncat) {
@@ -345,6 +357,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                             HiveUtils.syncMetaData4Impala(sql
                                     , taskConfig.getTargetDbEntity().getDbName(),
                                     taskConfig.getTargetTable());
+                            logger.info(String.format("任务【%s】执行完成!", jobName));
                         } else {
                             ManagerException managerException = new ManagerException(String.format("【groupName：%s】【triggerName：%s】导入出现异常,清空全量表失败：",
                                     groupName, taskName));
@@ -588,6 +601,8 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
             SqoopApi sqoopApi = SqoopApi.getSqoopApi();
 //            Map<String, String> sqoopProperties = HiveUtils.generateSqoopProperties(importParams);
             logger.info("--------------------------------任务名称为..." + sqoopProperties);
+            logger.info(String.format("!!!导入任务开始执行，任务名称【%s】"
+                    , sqoopParams.getProperties().get("mapred.job.name")));
 //            jobExecutionResult = sqoopApi.execute(jobId, command, paras, options);
             jobExecutionResult = sqoopApi.execute(jobId, command, paras, options, sqoopProperties);
             logger.info("------完成调用sqoopApi接口-----");
@@ -661,6 +676,8 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                     }
                 }
             }
+            logger.info(String.format("导入任务【%s】执行完成!!!"
+                    , sqoopParams.getProperties().get("mapred.job.name")));
             jobBizStatusEnum = JobBizStatusEnum.FINISHED;
             String sucMsg = "执行sqoop导入命令成功:" + String.format("【groupName=%s】【schedulerName=%s】！", groupName, taskName);
             logger.info(sucMsg);

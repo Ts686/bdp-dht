@@ -278,8 +278,10 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
             String jobName = String.format("%s-%s-%s_%s", "hive", taskConfig.getGroupName(),
                     taskConfig.getTriggerName(), System.currentTimeMillis());
             saveAppInfo(remoteJobInvokeParamsDto, jobName, jobId);
-            if (!HiveUtils.execUpdate(ParseXMLFileUtil.getDbById(taskConfig.getSourceDbId()), taskConfig, hiveJobNamePref,
-                    expTmpTableSql, Integer.valueOf(jdbcTimeout))) {
+            logger.info(String.format("!!!创建临时表任务开始执行,任务名称【%s】", jobName));
+            if (!HiveUtils.execUpdate(ParseXMLFileUtil.
+                            getDbById(taskConfig.getSourceDbId()), taskConfig, hiveJobNamePref,
+                    expTmpTableSql, Integer.valueOf(jdbcTimeout), jobName)) {
                 JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                 String messageLocalTw = String.format("【groupName=%s】【schedulerName=%s】在hive上将数据转移至临时表 出错", groupName,
                         taskName);
@@ -288,6 +290,8 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, messageLocalTw);
                 RinseStatusAndLogCache.removeTaskByJobId(jobId);
                 return;
+            } else {
+                logger.info(String.format("创建临时表任务【%s】执行完成!!!", jobName));
             }
 
             // 5、拼接sqoop参数
@@ -340,11 +344,15 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
             HiveUtils.setSqoopParamProperties(taskConfig, new HashMap<String, String>(),
                     "mapred.job.name=sqoop,", sqoopParams);
             saveAppInfo(remoteJobInvokeParamsDto, sqoopParams, jobId);
+            logger.info(String.format("!!!导出任务开始执行，任务名称【%s】"
+                    , sqoopParams.getProperties().get("mapred.job.name")));
             JobExecutionResult ret = sqoopApi.execute(jobId, command,
                     paras, options, sqoopParams.getProperties());
 
             // 7、执行结束
             if (ret.isSucceed()) {
+                logger.info(String.format("导出任务【%s】执行完成!!!"
+                        , sqoopParams.getProperties().get("mapred.job.name")));
                 JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.FINISHED;
                 String messageLocalTh = "执行sqoop导出命令成功:"
                         + String.format("【groupName=%s】【schedulerName=%s】！", groupName, taskName);
@@ -765,6 +773,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 logger.info("--------获取任务配置信息------------");
                 // 1、获取任务配置信息
                 TaskPropertiesConfig taskConfig = ParseXMLFileUtil.getTaskConfig(groupName, triggerName);
+
                 if (taskConfig == null
                         || (taskConfig.getDependencyTaskIds() != null && taskConfig.getDependencyTaskIds().size() > 0 && taskConfig
                         .getDependencyTaskList().size() <= 0)) {
@@ -798,12 +807,19 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 //增加jobName
                 SqoopParams sqoopParams = new SqoopParams();
                 HiveUtils.setSqoopParamProperties(taskConfig, new HashMap<String, String>(), "mapred.job.name=sqoop,", sqoopParams);
+                logger.info(String.format("清空PG库目标表--->【%s】,任务名称【%s】",
+                        taskConfig.getTargetTable(),
+                        sqoopParams.getProperties().get("mapred.job.name")));
                 JobExecutionResult ret = sqoopApi.execute(jobId,
                         CommonEnumCollection.TaskTypeEnum.getCommand(MessageConstant.SQOOP_EVAL),
                         clearMap, options1, sqoopParams.getProperties());
+
                 if (!ret.isSucceed()) {
                     logger.error(String.format("truncate失败.组名【%s】调度名【%s】", groupName, triggerName));
                     throw new ManagerException("******** Truncate失败......");
+                } else {
+                    logger.info(String.format("任务【%s】执行完成!",
+                            sqoopParams.getProperties().get("mapred.job.name")));
                 }
                 commonExportData(taskConfig, returnList, jobId, remoteJobInvokeParamsDto);
                 try {
