@@ -93,15 +93,15 @@ public class PgSqlUtils {
 			throws SQLException {
 		logger.debug("postsql JDBC连接信息: " + url);
 		Connection connection = null ;
-//		if(url.contains("sports_dc_rw")){
-//			connection = getPostgresqlConnectionFromDruid(dataSourceSports);
-//			logger.info("获取sports_dc_rw库的pg连接池连接");
-//
-//		}else if(url.contains("dc_db")){
-//			connection = getPostgresqlConnectionFromDruid(dataSourceDcdb);
-//			logger.info("获取dc_db库的pg连接池连接");
-//
-//		}
+		if(url.contains("dc_sports")){
+			connection = getPostgresqlConnectionFromDruid(dataSourceSports);
+			logger.info("获取dc_sports库的pg连接池连接");
+
+		}else if(url.contains("dc_db")){
+			connection = getPostgresqlConnectionFromDruid(dataSourceDcdb);
+			logger.info("获取dc_db库的pg连接池连接");
+
+		}
 
 		if(null != connection){
 			return connection;
@@ -258,20 +258,20 @@ public class PgSqlUtils {
 //        simpleTest(dbConfig, tableName);
 //		System.out.println(dbConfig.getConnectionUrl());
 
-		Connection postgresqlConnectionFromDruid = getPostgresqlConnectionFromDruid(dataSourceDcdb);
-		System.out.println(postgresqlConnectionFromDruid);
-
-
-		Connection sp = getPostgresqlConnectionFromDruid(dataSourceSports);
-		System.out.println(sp);
-
-//		Connection conn1 = getConn("jdbc:postgresql://10.240.12.21:5432/dc_db",
-//				"usr_dc_ods", "ScTLNUXy");
-//		System.out.println(conn1);
+//		Connection postgresqlConnectionFromDruid = getPostgresqlConnectionFromDruid(dataSourceDcdb);
+//		System.out.println(postgresqlConnectionFromDruid);
 //
-//		Connection conn2 = getConn("jdbc:postgresql://10.240.12.38:5432/dc_sports",
-//				"sports_dc_rw", "aUhyT78I");
-//		System.out.println(conn2);
+//
+//		Connection sp = getPostgresqlConnectionFromDruid(dataSourceSports);
+//		System.out.println(sp);
+
+		Connection conn1 = getConn("jdbc:postgresql://10.240.12.21:5432/dc_db",
+				"usr_dc_ods", "ScTLNUXy");
+		System.out.println(conn1);
+
+		Connection conn2 = getConn("jdbc:postgresql://10.240.12.38:5432/dc_sports",
+				"sports_dc_rw", "aUhyT78I");
+		System.out.println(conn2);
 
 //		Connection conn = getConn("jdbc:postgresql://172.17.209.1:5432/postgres",
 //				"postgres", "Pg2018J");
