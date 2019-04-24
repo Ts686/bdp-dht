@@ -48,7 +48,7 @@ import java.util.concurrent.*;
 @ManagedResource(objectName = DataLoadingTaskImpl.MBEAN_NAME, description = "导入任务")
 public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
     ThreadPoolExecutor pools = new ThreadPoolExecutor(
-            15, 30, 60,
+            80, 100, 60,
             TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(500), new RejectedExecutionHandler() {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
@@ -214,7 +214,16 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
     public void executeJobWithParams(String jobId, String taskName, String groupName,
                                      RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) {
         DataLoadingTaskImplThread dataLoadingTaskImplThread = new DataLoadingTaskImplThread(jobId, taskName, groupName, remoteJobInvokeParamsDto);
+        logger.info(String.format("导入任务开始执行，线程池信息:当前线程池中线程数量【%d】" +
+                        ",核心线程数【%d】,活跃线程数【%d】,缓存到队列的任务数量【%d】"
+                , pools.getPoolSize(), pools.getCorePoolSize(),
+                pools.getActiveCount(), pools.getQueue().size()));
         pools.submit(dataLoadingTaskImplThread);
+        logger.info(String.format("导入任务提交线程任务--->线程池信息:当前线程池中线程数量【%d】," +
+                        "核心线程数【%d】,活跃线程数【%d】,缓存到队列的任务数量【%d】"
+                , pools.getPoolSize(), pools.getCorePoolSize(),
+                pools.getActiveCount(), pools.getQueue().size()));
+        pools.allowCoreThreadTimeOut(true);
         logger.info("DataLoadingTaskImplThread started...");
     }
 

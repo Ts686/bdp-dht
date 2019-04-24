@@ -230,7 +230,11 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
     public void executeJobWithParams(String jobId, String triggerName, String groupName,
                                      RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) {
         DataOutputTaskImplThread dataLoadingTaskImplThread = new DataOutputTaskImplThread(jobId, triggerName, groupName, remoteJobInvokeParamsDto);
+        logger.info(String.format("数据导出任务开始执行，线程池信息:当前线程池中线程数量【%d】,核心线程数【%d】,活跃线程数【%d】,缓存到队列的任务数量【%d】"
+                , pools.getPoolSize(), pools.getCorePoolSize(), pools.getActiveCount(), pools.getQueue().size()));
         pools.submit(dataLoadingTaskImplThread);
+        logger.info(String.format("数据导出提交线程任务--->线程池信息:当前线程池中线程数量【%d】,核心线程数【%d】,活跃线程数【%d】,缓存到队列的任务数量【%d】"
+                , pools.getPoolSize(), pools.getCorePoolSize(), pools.getActiveCount(), pools.getQueue().size()));
         logger.info("DataOutputTaskImplThread started...");
 
     }
@@ -497,7 +501,9 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
         sbBuffer.append(tableName);
         //}
         sbBuffer.append(" t2 where 1=1 ");
-
+        if (!tableName.contains("transaction_history_log")) {
+            sbBuffer.append("and ods_update_time != '999999'");
+        }
         //全量导出
         if (taskConfig.getIsOverwrite() == 0) {
             if (taskConfig.getSyncTimeColumn() == null || taskConfig.getSyncTimeColumn().size() <= 0) {

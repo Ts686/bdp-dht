@@ -51,7 +51,7 @@ import com.yougou.logistics.base.common.vo.scheduler.RemoteJobInvokeParamsDto;
 public class CDCDataMoveTaskImpl implements RemoteJobServiceExtWithParams {
 
     ThreadPoolExecutor pools = new ThreadPoolExecutor(
-            15, 30, 60,
+            30, 50, 60,
             TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(500), new RejectedExecutionHandler() {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
@@ -144,7 +144,11 @@ public class CDCDataMoveTaskImpl implements RemoteJobServiceExtWithParams {
     public void executeJobWithParams(String jobId, String taskName, String groupName,
                                      RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) {
         CDCDataMoveTaskImplThread dataLoadingTaskImplThread = new CDCDataMoveTaskImplThread(jobId, taskName, groupName, remoteJobInvokeParamsDto);
+        logger.info(String.format("数据分发任务开始执行，线程池信息:当前线程池中线程数量【%d】,核心线程数【%d】,活跃线程数【%d】,缓存到队列的任务数量【%d】"
+                , pools.getPoolSize(), pools.getCorePoolSize(), pools.getActiveCount(), pools.getQueue().size()));
         pools.submit(dataLoadingTaskImplThread);
+        logger.info(String.format("数据分发提交线程任务--->线程池信息:当前线程池中线程数量【%d】,核心线程数【%d】,活跃线程数【%d】,缓存到队列的任务数量【%d】"
+                , pools.getPoolSize(), pools.getCorePoolSize(), pools.getActiveCount(), pools.getQueue().size()));
         logger.info("CDCDataMoveTaskImplThread started...");
     }
 
