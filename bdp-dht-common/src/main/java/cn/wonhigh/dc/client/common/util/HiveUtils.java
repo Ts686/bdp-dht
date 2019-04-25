@@ -157,7 +157,7 @@ public class HiveUtils {
         logger.info("获取Hive JDBC连接信息: " + url);
         // DriverManager.setLoginTimeout(jdbcTimeout);
 
-        String jdbcUser = "hive";
+        String jdbcUser = "bdp_app";
         String jdbcPassword = "123456";
 
         return DriverManager.getConnection(url, user == null ? jdbcUser : user, passwd == null ? jdbcPassword : passwd);
