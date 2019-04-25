@@ -135,7 +135,8 @@ public class HiveUtils {
             return connectionFromDruid;
         }
 
-        String jdbcUser = "hive";
+        //默认用户修改为bdp_app
+        String jdbcUser = "bdp_app";
         String jdbcPassword = "123456";
         logger.info("druid连接池中获取hive连接失败，直接创建connection");
 
