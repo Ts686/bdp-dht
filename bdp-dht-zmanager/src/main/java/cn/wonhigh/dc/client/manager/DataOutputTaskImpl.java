@@ -174,34 +174,34 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
     }
 
     @Override
-    public void initializeJob(String jobId, String triggerName, String groupName) {
+    public void initializeJob(String subInstanceId, String triggerName, String groupName) {
 
     }
 
     @Override
-    public void pauseJob(String jobId, String triggerName, String groupName) {
+    public void pauseJob(String subInstanceId, String triggerName, String groupName) {
 
     }
 
     @Override
-    public void resumeJob(String jobId, String triggerName, String groupName) {
+    public void resumeJob(String subInstanceId, String triggerName, String groupName) {
 
     }
 
     @Override
-    public void stopJob(String jobId, String triggerName, String groupName) {
+    public void stopJob(String subInstanceId, String triggerName, String groupName) {
 
     }
 
     @Override
-    public void restartJob(String jobId, String triggerName, String groupName) {
+    public void restartJob(String subInstanceId, String triggerName, String groupName) {
 
     }
 
     @Override
-    public JobBizStatusEnum getJobStatus(String jobId, String triggerName, String groupName) {
+    public JobBizStatusEnum getJobStatus(String subInstanceId, String triggerName, String groupName) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put(ParamNameEnum.TASK_ID.getValue(), jobId);
+        params.put(ParamNameEnum.TASK_ID.getValue(), subInstanceId);
         params.put(ParamNameEnum.TASK_NAME.getValue(), triggerName);
         params.put(ParamNameEnum.GROUP_NAME.getValue(), groupName);
         ClientTaskStatusLog clientTaskStatusLog = clientTaskStatusLogService.findLastestStatus(params);
@@ -217,7 +217,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
     }
 
     @Override
-    public String getLogs(String jobId, String triggerName, String groupName, long lastDate) {
+    public String getLogs(String subInstanceId, String triggerName, String groupName, long lastDate) {
 
         return null;
     }
@@ -227,9 +227,9 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
      * 2、pg copy方式将增量数据导出到pg
      */
     @Override
-    public void executeJobWithParams(String jobId, String triggerName, String groupName,
+    public void executeJobWithParams(String subInstanceId, String triggerName, String groupName,
                                      RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) {
-        DataOutputTaskImplThread dataLoadingTaskImplThread = new DataOutputTaskImplThread(jobId, triggerName, groupName, remoteJobInvokeParamsDto);
+        DataOutputTaskImplThread dataLoadingTaskImplThread = new DataOutputTaskImplThread(subInstanceId, triggerName, groupName, remoteJobInvokeParamsDto);
         logger.info(String.format("数据导出任务开始执行，线程池信息:当前线程池中线程数量【%d】,核心线程数【%d】,活跃线程数【%d】,缓存到队列的任务数量【%d】"
                 , pools.getPoolSize(), pools.getCorePoolSize(), pools.getActiveCount(), pools.getQueue().size()));
         pools.submit(dataLoadingTaskImplThread);
@@ -260,11 +260,11 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
      *
      * @param taskConfig
      * @param returnList
-     * @param jobId
+     * @param subInstanceId
      * @throws Throwable
      */
     private void commonExportData(TaskPropertiesConfig taskConfig,
-                                  List<Object> returnList, String jobId,
+                                  List<Object> returnList, String subInstanceId,
                                   RemoteJobInvokeParamsDto remoteJobInvokeParamsDto)
             throws Throwable {
         Date syncBeginTime = (Date) returnList.get(2);
@@ -281,7 +281,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
             logger.info(String.format("========导出产生临时表的sql语句：%s", expTmpTableSql));
             String jobName = String.format("%s-%s-%s_%s", "hive", taskConfig.getGroupName(),
                     taskConfig.getTriggerName(), System.currentTimeMillis());
-            saveAppInfo(remoteJobInvokeParamsDto, jobName, jobId);
+            saveAppInfo(remoteJobInvokeParamsDto, jobName, subInstanceId);
             logger.info(String.format("!!!创建临时表任务开始执行,任务名称【%s】", jobName));
             if (!HiveUtils.execUpdate(ParseXMLFileUtil.
                             getDbById(taskConfig.getSourceDbId()), taskConfig, hiveJobNamePref,
@@ -290,9 +290,9 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 String messageLocalTw = String.format("【groupName=%s】【schedulerName=%s】在hive上将数据转移至临时表 出错", groupName,
                         taskName);
                 logger.error(messageLocalTw);
-                addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, messageLocalTw, syncBeginTime, syncEndTime);
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, messageLocalTw);
-                RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, messageLocalTw, syncBeginTime, syncEndTime);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, messageLocalTw);
+                RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
                 return;
             } else {
                 logger.info(String.format("创建临时表任务【%s】执行完成!!!", jobName));
@@ -347,10 +347,10 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
             SqoopParams sqoopParams = new SqoopParams();
             HiveUtils.setSqoopParamProperties(taskConfig, new HashMap<String, String>(),
                     "mapred.job.name=sqoop,", sqoopParams);
-            saveAppInfo(remoteJobInvokeParamsDto, sqoopParams, jobId);
+            saveAppInfo(remoteJobInvokeParamsDto, sqoopParams, subInstanceId);
             logger.info(String.format("!!!导出任务开始执行，任务名称【%s】"
                     , sqoopParams.getProperties().get("mapred.job.name")));
-            JobExecutionResult ret = sqoopApi.execute(jobId, command,
+            JobExecutionResult ret = sqoopApi.execute(subInstanceId, command,
                     paras, options, sqoopParams.getProperties());
 
             // 7、执行结束
@@ -387,24 +387,24 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                             + "【groupName=%s】【schedulerName=%s】！", insertSql, groupName, taskName));
                     PgSqlUtils.executeUpdate(taskConfig.getTargetDbEntity(), insertSql, insertPara);
                 }
-                addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, messageLocalTh, syncBeginTime, syncEndTime);
+                addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, messageLocalTh, syncBeginTime, syncEndTime);
                 // 成功后，需要传mq并删除缓存
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, messageLocalTh);
-                RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, messageLocalTh);
+                RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
             } else {
                 // 如果导入命令执行失败
                 JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                 String messageLocalFo = String.format("【groupName=%s】【schedulerName=%s】执行导出失败！,失败原因：%s", groupName,
                         taskName, ret.getErrorMessage());
                 logger.error(messageLocalFo);
-                addTaskLog(jobId, taskName, groupName, jobBizStatusEnum,
+                addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum,
                         messageLocalFo.substring(0, Math.min(messageLocalFo.length(), 800)), syncBeginTime, syncEndTime);
-                RinseStatusAndLogCache.removeTaskByJobId(jobId);
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, messageLocalFo);
+                RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, messageLocalFo);
             }
         } catch (SQLException e) {
             JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum,
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum,
                     jmsClusterMgr, ExceptionUtil.getStackTrace(e));
             logger.error("导出失败...", e);
             throw e;
@@ -425,25 +425,25 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
             returnList.add(endTimeStr);
             SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
             if (startTimeStr != null && endTimeStr != null) {
-                logger.info(String.format("【jobId为：%s】的任务被调用,开始时间:%s ;结束时间:%s .", taskId, startTimeStr, endTimeStr));
+                logger.info(String.format("【subInstanceId为：%s】的任务被调用,开始时间:%s ;结束时间:%s .", taskId, startTimeStr, endTimeStr));
                 try {
                     Date syncBeginTime = sdf.parse(startTimeStr);
                     Date syncEndTime = sdf.parse(endTimeStr);
                     returnList.add(syncBeginTime);
                     returnList.add(syncEndTime);
                 } catch (ParseException e) {
-                    RuntimeException runtimeException = new RuntimeException(String.format("【jobId为：%s】的任务被调用,开始时间:%s ;结束时间:%s 转换出现异常", taskId,
+                    RuntimeException runtimeException = new RuntimeException(String.format("【subInstanceId为：%s】的任务被调用,开始时间:%s ;结束时间:%s 转换出现异常", taskId,
                             startTimeStr, endTimeStr));
                     JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
                     SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr, ExceptionUtil.getStackTrace(e));
                     throw runtimeException;
                 }
             } else {
-                throw new ManagerException(String.format("【jobId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
+                throw new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
             }
 
         } else {
-            throw new ManagerException(String.format("【jobId为：%s】的任务被调用,传入的参数为空.", taskId));
+            throw new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的参数为空.", taskId));
         }
         return returnList;
     }
@@ -691,9 +691,9 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
         executeJobWithParams(GernerateUuidUtils.getUUID(), triggerName, groupName, null);
     }
 
-    private void saveAppInfo(RemoteJobInvokeParamsDto remoteJobInvokeParamsDto, String jobName, String jobId) {
+    private void saveAppInfo(RemoteJobInvokeParamsDto remoteJobInvokeParamsDto, String jobName, String subInstanceId) {
         String instanceId = remoteJobInvokeParamsDto.getParam("instanceId");
-        String subInstanceId = remoteJobInvokeParamsDto.getParam("subInstanceId");
+        String jobId = remoteJobInvokeParamsDto.getParam("jobId");
         Map<String, String> res = new HashMap<String, String>();
         res.put("scheduleId", jobId);
         res.put("taskParentId", instanceId);
@@ -709,11 +709,11 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
     }
 
     private void saveAppInfo(RemoteJobInvokeParamsDto remoteJobInvokeParamsDto,
-                             SqoopParams sqoopParams, String jobId) {
+                             SqoopParams sqoopParams, String subInstanceId) {
         String instanceId = remoteJobInvokeParamsDto.getParam("instanceId");
-        String subInstanceId = remoteJobInvokeParamsDto.getParam("subInstanceId");
+        String jobId = remoteJobInvokeParamsDto.getParam("jobId");
         Map<String, String> res = new HashMap<String, String>();
-        res.put("scheduleId", jobId);
+        res.put("scheduleId", subInstanceId);
         res.put("taskParentId", instanceId);
         res.put("taskSonId", subInstanceId);
         res.put("mapred.job.name", sqoopParams.getProperties().get("mapred.job.name"));
@@ -727,14 +727,14 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
 
     class DataOutputTaskImplThread implements Runnable {
         private final Logger logger = Logger.getLogger(DataOutputTaskImplThread.class);
-        private String jobId;
+        private String subInstanceId;
         private String triggerName;
         private String groupName;
         private RemoteJobInvokeParamsDto remoteJobInvokeParamsDto;
 
-        public DataOutputTaskImplThread(String jobId, String triggerName, String groupName,
+        public DataOutputTaskImplThread(String subInstanceId, String triggerName, String groupName,
                                         RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) {
-            this.jobId = jobId;
+            this.subInstanceId = subInstanceId;
             this.triggerName = triggerName;
             this.groupName = groupName;
             this.remoteJobInvokeParamsDto = remoteJobInvokeParamsDto;
@@ -744,7 +744,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
         public void run() {
             //保存任务信息
             try {
-                CommUtil.saveJobInfo(resumeHiveTaskInfoService, jobId, triggerName, groupName,
+                CommUtil.saveJobInfo(resumeHiveTaskInfoService, subInstanceId, triggerName, groupName,
                         remoteJobInvokeParamsDto, DataOutputTaskImpl.class);
             } catch (Exception e) {
                 String message = "保存任务信息失败";
@@ -752,9 +752,9 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
             }
             JobBizStatusEnum jobBizStatusEnum = null;
             //如果重复调用，则忽略本次请求
-            JobBizStatusEnum jobStauts = RinseStatusAndLogCache.getTaskStatusByJobId(jobId);
+            JobBizStatusEnum jobStauts = RinseStatusAndLogCache.getTaskStatusByJobId(subInstanceId);
             if (jobStauts != null && !jobStauts.name().equals(JobBizStatusEnum.INTERRUPTED.name())) {
-                logger.info(String.format("【jobId为：%s】的任务被重复调用", jobId));
+                logger.info(String.format("【subInstanceId为：%s】的任务被重复调用", subInstanceId));
                 return;
             }
 
@@ -762,7 +762,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
             Date syncEndTime = null;
             try {
                 //判断传入参数是否合理
-                List<Object> returnList = checkParamValue(remoteJobInvokeParamsDto, jobId);
+                List<Object> returnList = checkParamValue(remoteJobInvokeParamsDto, subInstanceId);
                 @SuppressWarnings("unused")
                 String startTimeStr = (String) returnList.get(0);
                 @SuppressWarnings("unused")
@@ -773,8 +773,8 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 logger.info("--------开始进入调度方法--初始化------------");
                 jobBizStatusEnum = JobBizStatusEnum.INITIALIZING;
                 String messageLocalZe = "初始化中";
-                addTaskLog(jobId, triggerName, groupName, jobBizStatusEnum, messageLocalZe, syncBeginTime, syncEndTime);
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, messageLocalZe);
+                addTaskLog(subInstanceId, triggerName, groupName, jobBizStatusEnum, messageLocalZe, syncBeginTime, syncEndTime);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, messageLocalZe);
 
                 logger.info("--------获取任务配置信息------------");
                 // 1、获取任务配置信息
@@ -785,8 +785,8 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                         .getDependencyTaskList().size() <= 0)) {
                     String msg = String.format("获取缓存中的xml失败：组名【%s】调度名【%s】", groupName, triggerName);
                     logger.error(msg);
-                    SendMsg2AMQ.updateStatusAndSendMsg(jobId, JobBizStatusEnum.INTERRUPTED, jmsClusterMgr, msg);
-                    RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                    SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, JobBizStatusEnum.INTERRUPTED, jmsClusterMgr, msg);
+                    RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
                     return;
                 }
 
@@ -795,8 +795,8 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 // 2、更新实例状态--初始化
                 jobBizStatusEnum = JobBizStatusEnum.RUNNING;
                 String message = "运行中";
-                addTaskLog(jobId, triggerName, groupName, jobBizStatusEnum, message, syncBeginTime, syncEndTime);
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
+                addTaskLog(subInstanceId, triggerName, groupName, jobBizStatusEnum, message, syncBeginTime, syncEndTime);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
                 Map<String, String> clearMap = null;
 
                 clearMap = clearAllData(taskConfig);
@@ -816,7 +816,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 logger.info(String.format("清空PG库目标表--->【%s】,任务名称【%s】",
                         taskConfig.getTargetTable(),
                         sqoopParams.getProperties().get("mapred.job.name")));
-                JobExecutionResult ret = sqoopApi.execute(jobId,
+                JobExecutionResult ret = sqoopApi.execute(subInstanceId,
                         CommonEnumCollection.TaskTypeEnum.getCommand(MessageConstant.SQOOP_EVAL),
                         clearMap, options1, sqoopParams.getProperties());
 
@@ -827,10 +827,10 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                     logger.info(String.format("任务【%s】执行完成!",
                             sqoopParams.getProperties().get("mapred.job.name")));
                 }
-                commonExportData(taskConfig, returnList, jobId, remoteJobInvokeParamsDto);
+                commonExportData(taskConfig, returnList, subInstanceId, remoteJobInvokeParamsDto);
                 try {
 
-                    CommUtil.delJobInfo(resumeHiveTaskInfoService, jobId);
+                    CommUtil.delJobInfo(resumeHiveTaskInfoService, subInstanceId);
                 } catch (Exception e) {
                     logger.error("删除任务信息失败", e);
                 }
@@ -839,11 +839,11 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 String errMsg = ExceptionHandleUtils.getExceptionMsg(e);
                 String message = String.format("【groupName：%s】--【triggerName：%s】导出任务时失败", groupName, triggerName) + errMsg;
                 logger.error(message);
-                addTaskLog(jobId, triggerName, groupName, jobBizStatusEnum,
+                addTaskLog(subInstanceId, triggerName, groupName, jobBizStatusEnum,
                         message.substring(0, Math.min(message.length(), 800)), syncBeginTime, syncEndTime);
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                         message + "\n" + ExceptionUtil.getStackTrace(e));
-                RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
             }
         }
     }

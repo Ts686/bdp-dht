@@ -149,33 +149,33 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
     }
 
     @Override
-    public void initializeJob(String jobId, String triggerName, String groupName) {
+    public void initializeJob(String subInstanceId, String triggerName, String groupName) {
         // if(!transactionHistoryLogs.isEmpty()){
         // HiveUtils.transactionHistoryLogSrc =
         // transactionHistoryLogs.split(",");
-        // logger.info(String.format("【jobId为：%s】的任务被重复调用", jobId));
+        // logger.info(String.format("【subInstanceId为：%s】的任务被重复调用", subInstanceId));
         // }else{
         //
         // }
     }
 
     @Override
-    public void pauseJob(String jobId, String triggerName, String groupName) {
+    public void pauseJob(String subInstanceId, String triggerName, String groupName) {
 
     }
 
     @Override
-    public void resumeJob(String jobId, String triggerName, String groupName) {
+    public void resumeJob(String subInstanceId, String triggerName, String groupName) {
 
     }
 
     @Override
-    public void stopJob(String jobId, String triggerName, String groupName) {
+    public void stopJob(String subInstanceId, String triggerName, String groupName) {
 
     }
 
     @Override
-    public void restartJob(String jobId, String triggerName, String groupName) {
+    public void restartJob(String subInstanceId, String triggerName, String groupName) {
 
     }
 
@@ -201,19 +201,19 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
      * 暂时无用
      */
     @Override
-    public String getLogs(String jobId, String triggerName, String groupName, long lastDate) {
+    public String getLogs(String subInstanceId, String triggerName, String groupName, long lastDate) {
         return null;
     }
 
     /**
      * 调度中心导入jmx方法调用
-     * 注意：jobId在此为调度系统的subInstanceId（子实例id）
-     * 真正的jobId需要在RemoteJobInvokeParamsDto对象中获取
+     * 注意：subInstanceId在此为调度系统的subInstanceId（子实例id）
+     * 真正的subInstanceId需要在RemoteJobInvokeParamsDto对象中获取
      */
     @Override
-    public void executeJobWithParams(String jobId, String taskName, String groupName,
+    public void executeJobWithParams(String subInstanceId, String taskName, String groupName,
                                      RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) {
-        DataLoadingTaskImplThread dataLoadingTaskImplThread = new DataLoadingTaskImplThread(jobId, taskName, groupName, remoteJobInvokeParamsDto);
+        DataLoadingTaskImplThread dataLoadingTaskImplThread = new DataLoadingTaskImplThread(subInstanceId, taskName, groupName, remoteJobInvokeParamsDto);
         logger.info(String.format("导入任务开始执行，线程池信息:当前线程池中线程数量【%d】" +
                         ",核心线程数【%d】,活跃线程数【%d】,缓存到队列的任务数量【%d】"
                 , pools.getPoolSize(), pools.getCorePoolSize(),
@@ -241,14 +241,14 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
             returnList.add(endTimeStr);
             SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
             if (startTimeStr != null && endTimeStr != null) {
-                logger.info(String.format("【jobId为：%s】的任务被调用,开始时间:%s ;结束时间:%s .", taskId, startTimeStr, endTimeStr));
+                logger.info(String.format("【subInstanceId为：%s】的任务被调用,开始时间:%s ;结束时间:%s .", taskId, startTimeStr, endTimeStr));
                 try {
                     Date syncBeginTime = sdf.parse(startTimeStr);
                     Date syncEndTime = sdf.parse(endTimeStr);
                     returnList.add(syncBeginTime);
                     returnList.add(syncEndTime);
                 } catch (ParseException e) {
-                    RuntimeException runtimeException = new RuntimeException(String.format("【jobId为：%s】的任务被调用,开始时间:%s ;结束时间:%s 转换出现异常", taskId,
+                    RuntimeException runtimeException = new RuntimeException(String.format("【subInstanceId为：%s】的任务被调用,开始时间:%s ;结束时间:%s 转换出现异常", taskId,
                             startTimeStr, endTimeStr));
                     JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
                     SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
@@ -256,15 +256,15 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                     throw runtimeException;
                 }
             } else {
-                ManagerException managerException = new ManagerException(String.format("【jobId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
+                ManagerException managerException = new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
                 JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
                 SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
                         ExceptionUtil.getStackTrace(managerException));
-                throw new ManagerException(String.format("【jobId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
+                throw new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
             }
 
         } else {
-            ManagerException managerException = new ManagerException(String.format("【jobId为：%s】的任务被调用,传入的参数为空.", taskId));
+            ManagerException managerException = new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的参数为空.", taskId));
             JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
             SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
                     ExceptionUtil.getStackTrace(managerException));
@@ -278,21 +278,21 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
      *
      * @throws Exception
      */
-    private SqoopParams taskInitMethod(String jobId, String taskName, String groupName,
+    private SqoopParams taskInitMethod(String subInstanceId, String taskName, String groupName,
                                        ClientTaskStatusLog clientTaskStatusLog, RemoteJobInvokeParamsDto remoteJobInvokeParamsDto,
                                        Date syncBeginTime, Date syncEndTime, Integer isRepairStr, String parentsJobId,
                                        TaskPropertiesConfig taskConfig) throws ManagerException {
 
         String message = String.format("开始检查参数导入参数是否有效！  【groupName：%s】【triggerName：%s】", groupName, taskName);
         logger.info(message);
-        checkParamValue(remoteJobInvokeParamsDto, jobId);
+        checkParamValue(remoteJobInvokeParamsDto, subInstanceId);
         message = String.format("完成检查参数导入参数有效！  【groupName：%s】【triggerName：%s】", groupName, taskName);
         logger.info(message);
         // 0.更新初始化状态
         JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INITIALIZING;
 
-        addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, message);
-        SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
+        addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, message);
+        SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
         message = String.format("初始化中...  【groupName：%s】【triggerName：%s】", groupName, taskName);
         logger.info(message);
         String jobName = String.format("%s-%s-%s_%s", "hive", taskConfig.getGroupName(),
@@ -371,12 +371,12 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                             ManagerException managerException = new ManagerException(String.format("【groupName：%s】【triggerName：%s】导入出现异常,清空全量表失败：",
                                     groupName, taskName));
                             jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-                            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+                            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                                     ExceptionUtil.getStackTrace(managerException));
 //                            throw managerException
                         }
                     }
-                    return getFullSqoopParams(taskConfig, syncBeginTime, syncEndTime, jobId, remoteJobInvokeParamsDto);
+                    return getFullSqoopParams(taskConfig, syncBeginTime, syncEndTime, subInstanceId, remoteJobInvokeParamsDto);
                 } else if (!taskConfig.getSourceTable().endsWith(HiveDefinePartNameEnum.CDC_TABLE_SUBFIX.getValue())) {
                     if (taskConfig.getIsSlaveTable() != 1) {
                         // 2.truncate 分区内的所有数据(*transaction_history_log
@@ -549,14 +549,14 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                                 taskConfig.getTargetTable());
                     }
 //                    3. 初始化任务，构造sqoop参数
-                    return getIncreamentSqoopParams(taskConfig, syncBeginTime, syncEndTime, jobId);
+                    return getIncreamentSqoopParams(taskConfig, syncBeginTime, syncEndTime, subInstanceId);
 
                 } else {
                     message = String
                             .format("【groupName：%s】【triggerName：%s】导入出现异常,既不是全量导入，也缺失增量导入所需的条件：", groupName, taskName);
                     ManagerException managerException = new ManagerException(message);
                     jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-                    SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+                    SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                             ExceptionUtil.getStackTrace(managerException));
                     logger.error(managerException.getMessage(), managerException);
                     return null;
@@ -565,7 +565,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                 message = String.format("【groupName：%s】【triggerName：%s】获取对应的xml 配置文件失败！", groupName, taskName);
                 ManagerException managerException = new ManagerException(message);
                 jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                         ExceptionUtil.getStackTrace(managerException));
 //                throw new ManagerException(message);
 
@@ -574,7 +574,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
         } catch (Throwable e) {
             message = String.format("【groupName：%s】【triggerName：%s】获取对应的xml 配置文件失败！", groupName, taskName);
             jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                     message + "\n" + ExceptionUtil.getStackTrace(e));
             logger.error("error in taskInitMethod...: " + e.getMessage());
             return null;
@@ -584,17 +584,17 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
     /**
      * 任务执行过程
      *
-     * @param jobId
+     * @param subInstanceId
      * @throws Exception
      */
-    private void taskExcuteMethod(String jobId, String taskName, String groupName,
+    private void taskExcuteMethod(String subInstanceId, String taskName, String groupName,
                                   ClientTaskStatusLog clientTaskStatusLog, SqoopParams sqoopParams, Date syncBeginTime, Date syncEndTime,
                                   TaskPropertiesConfig taskConfig) throws ManagerException {
 
         JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.RUNNING;
         String runMsg = "运行中";
-        addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, runMsg);
-        SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, runMsg);
+        addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, runMsg);
+        SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, runMsg);
         JobExecutionResult jobExecutionResult = null;
 
         // 4.执行sqoop命令
@@ -612,21 +612,21 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
             logger.info("--------------------------------任务名称为..." + sqoopProperties);
             logger.info(String.format("!!!导入任务开始执行，任务名称【%s】"
                     , sqoopParams.getProperties().get("mapred.job.name")));
-//            jobExecutionResult = sqoopApi.execute(jobId, command, paras, options);
-            jobExecutionResult = sqoopApi.execute(jobId, command, paras, options, sqoopProperties);
+//            jobExecutionResult = sqoopApi.execute(subInstanceId, command, paras, options);
+            jobExecutionResult = sqoopApi.execute(subInstanceId, command, paras, options, sqoopProperties);
             logger.info("------完成调用sqoopApi接口-----");
         } catch (MaxHadoopJobRequestsException e) {
             ManagerException managerException = new ManagerException(
-                    String.format("import job runs into max job request error for sqoop job '%s'", jobId), e);
+                    String.format("import job runs into max job request error for sqoop job '%s'", subInstanceId), e);
             jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, ExceptionUtil.getStackTrace(managerException));
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, ExceptionUtil.getStackTrace(managerException));
             logger.error(managerException.getMessage(), managerException);
 //            throw new ManagerException(
-//                    String.format("import job runs into max job request error for sqoop job '%s'", jobId), e);
+//                    String.format("import job runs into max job request error for sqoop job '%s'", subInstanceId), e);
         } catch (Throwable t) {
-            String msg = String.format("import job runs into unknown error for sqoop job '%s'", jobId);
+            String msg = String.format("import job runs into unknown error for sqoop job '%s'", subInstanceId);
             jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                     msg + "\n" + ExceptionUtil.getStackTrace(t));
 //            throw new ManagerException(msg, t);
             logger.error(t.getMessage(), t);
@@ -635,7 +635,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
         if (jobExecutionResult == null) {
             ManagerException managerException = new ManagerException("sqoop没有反馈执行结果.....");
             jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                     ExceptionUtil.getStackTrace(managerException
                     ));
             logger.error(managerException.getMessage(), managerException);
@@ -670,8 +670,8 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                 } catch (Exception e) {
                     ManagerException managerException = new ManagerException("数据从txt类型的表转移至parquet失败.....");
                     jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-                    addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, "数据从txt类型的表转移至parquet失败");
-                    SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+                    addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, "数据从txt类型的表转移至parquet失败");
+                    SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                             ExceptionUtil.getStackTrace(managerException));
                 } finally {
                     try {
@@ -686,8 +686,8 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                     } catch (Exception e) {
                         ManagerException managerException = new ManagerException("删除临时表失败.....");
                         jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-                        addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, "删除临时表失败.....");
-                        SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+                        addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, "删除临时表失败.....");
+                        SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                                 ExceptionUtil.getStackTrace(managerException));
                     }
                 }
@@ -697,26 +697,26 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
             jobBizStatusEnum = JobBizStatusEnum.FINISHED;
             String sucMsg = "执行sqoop导入命令成功:" + String.format("【groupName=%s】【schedulerName=%s】！", groupName, taskName);
             logger.info(sucMsg);
-            addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, sucMsg, syncBeginTime, syncEndTime);
+            addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, sucMsg, syncBeginTime, syncEndTime);
         } else if (JobStatus.Repeat == jobExecutionResult.getJobStatus()) {
-            // 如果导入命令出现jobId重复
+            // 如果导入命令出现subInstanceId重复
             ManagerException managerException = new ManagerException(jobExecutionResult.getErrorMessage());
             jobBizStatusEnum = JobBizStatusEnum.STOPED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                     jobExecutionResult.getErrorMessage() + "\n" + ExceptionUtil.getStackTrace(managerException));
             logger.error(managerException.getMessage(), managerException);
         } else {
             ManagerException managerException = new ManagerException(jobExecutionResult.getErrorMessage());
             // 如果导入命令执行失败
             jobBizStatusEnum = JobBizStatusEnum.STOPED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                     jobExecutionResult.getErrorMessage() + "\n" + ExceptionUtil.getStackTrace(managerException));
             logger.error(managerException.getMessage(), managerException);
         }
 
         // 成功后，需要传mq并删除缓存
-        SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, "");
-        RinseStatusAndLogCache.removeTaskByJobId(jobId);
+        SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, "");
+        RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
 //        cleanAppInfo(sqoopParams);
     }
 
@@ -748,19 +748,19 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
      * @param taskConfig
      * @param syncBeginTime
      * @param syncEndTime
-     * @param jobId
+     * @param subInstanceId
      * @param remoteJobInvokeParamsDto
      * @return
      * @throws ManagerException
      */
     private SqoopParams getFullSqoopParams(TaskPropertiesConfig taskConfig, Date syncBeginTime, Date syncEndTime,
-                                           String jobId, RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) throws ManagerException {
+                                           String subInstanceId, RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) throws ManagerException {
 
         TaskDatabaseConfig sourceDbEntity = taskConfig.getSourceDbEntity();
         if (sourceDbEntity == null) {
             IllegalArgumentException iilegalError = new IllegalArgumentException("请检查调度任务数据库配置信息");
             JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr
                     , ExceptionUtil.getStackTrace(iilegalError));
             throw iilegalError;
         }
@@ -864,7 +864,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
      * 单表增量导入情形
      */
     private SqoopParams getIncreamentSqoopParams(TaskPropertiesConfig taskConfig, Date syncBeginTime, Date syncEndTime,
-                                                 String jobId) throws ManagerException {
+                                                 String subInstanceId) throws ManagerException {
         String message = "";
         TaskDatabaseConfig sourceDbEntity = taskConfig.getSourceDbEntity();
         int hivePartitionValue = this.getHivePartitionValue(syncBeginTime);
@@ -872,7 +872,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
             message = "请检查调度任务数据库配置信息";
             IllegalArgumentException illegalArgumentException = new IllegalArgumentException(message);
             JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                     ExceptionUtil.getStackTrace(illegalArgumentException));
             throw illegalArgumentException;
         }
@@ -934,7 +934,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                         IllegalArgumentException illegalArgumentException = new IllegalArgumentException(message);
                         message = "导入不支持这种字段类型.......";
                         JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-                        SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum,
+                        SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum,
                                 jmsClusterMgr, ExceptionUtil.getStackTrace(illegalArgumentException));
                         throw illegalArgumentException;
                     }
@@ -959,7 +959,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                         message = "导入不支持这种字段类型.......";
                         IllegalArgumentException illegalArgumentException = new IllegalArgumentException(message);
                         JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-                        SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr
+                        SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr
                                 , ExceptionUtil.getStackTrace(illegalArgumentException));
                         throw illegalArgumentException;
                     }
@@ -972,7 +972,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                 message = "导入不支持这种数据库类型.......";
                 IllegalArgumentException illegalArgumentException = new IllegalArgumentException(message);
                 JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                         ExceptionUtil.getStackTrace(illegalArgumentException));
                 throw illegalArgumentException;
             }
@@ -980,7 +980,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
             IllegalArgumentException illegalArgumentException = new IllegalArgumentException(message);
             message = "时间戳字段个数存在问题.......";
             JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                     ExceptionUtil.getStackTrace(illegalArgumentException));
             throw illegalArgumentException;
         }
@@ -991,7 +991,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
         if (selectColumns == null || selectColumns.size() <= 0) {
             IllegalArgumentException illegalArgumentException = new IllegalArgumentException("查询列表不能为空.....");
             JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+            SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                     ExceptionUtil.getStackTrace(illegalArgumentException));
             throw illegalArgumentException;
         } else {
@@ -1210,7 +1210,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
         executeJobWithParams(GernerateUuidUtils.getUUID(), triggerName, groupName, rD);
     }
 
-    public String executeJobWithParamsForTest(String jobId, String triggerName, String groupName,
+    public String executeJobWithParamsForTest(String subInstanceId, String triggerName, String groupName,
                                               RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) throws Exception {
         /**
          * 调度执行状态
@@ -1221,9 +1221,10 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
     }
 
     private void saveAppInfo(RemoteJobInvokeParamsDto remoteJobInvokeParamsDto,
-                             SqoopParams sqoopParams, String jobId) {
+                             SqoopParams sqoopParams, String subInstanceId) {
         String instanceId = remoteJobInvokeParamsDto.getParam("instanceId");
-        String subInstanceId = remoteJobInvokeParamsDto.getParam("subInstanceId");
+        String jobId = remoteJobInvokeParamsDto.getParam("jobId");
+//  String subInstanceId = remoteJobInvokeParamsDto.getParam("subInstanceId");
         Map<String, String> res = new HashMap<String, String>();
         res.put("scheduleId", jobId);
         res.put("taskParentId", instanceId);
@@ -1240,14 +1241,14 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
 
     class DataLoadingTaskImplThread implements Runnable {
         private final Logger logger = Logger.getLogger(DataLoadingTaskImplThread.class);
-        private String jobId;
+        private String subInstanceId;
         private String taskName;
         private String groupName;
         private RemoteJobInvokeParamsDto remoteJobInvokeParamsDto;
 
-        public DataLoadingTaskImplThread(String jobId, String taskName,
+        public DataLoadingTaskImplThread(String subInstanceId, String taskName,
                                          String groupName, RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) {
-            this.jobId = jobId;
+            this.subInstanceId = subInstanceId;
             this.taskName = taskName;
             this.groupName = groupName;
             this.remoteJobInvokeParamsDto = remoteJobInvokeParamsDto;
@@ -1255,11 +1256,11 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
 
         @Override
         public void run() {
-            logger.info("执行DataLoadingTaskImpl任务，调度参数为jobId=【" + jobId + "】taskName=【" + taskName + "】groupName=【"
+            logger.info("执行DataLoadingTaskImpl任务，调度参数为subInstanceId=【" + subInstanceId + "】taskName=【" + taskName + "】groupName=【"
                     + groupName + "】remoteJobInvokeParamsDto=【" + new Gson().toJson(remoteJobInvokeParamsDto) + "】");
             //保存任务信息
             try {
-                CommUtil.saveJobInfo(resumeHiveTaskInfoService, jobId, taskName, groupName,
+                CommUtil.saveJobInfo(resumeHiveTaskInfoService, subInstanceId, taskName, groupName,
                         remoteJobInvokeParamsDto, DataLoadingTaskImpl.class);
             } catch (Exception e) {
                 String message = "保存任务信息失败";
@@ -1271,10 +1272,10 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
             Integer isRepair = 0;
             String parentJobIdStr = "";
             // 如果重复调用，则忽略本次请求
-            jobId = jobId.trim();
-            JobBizStatusEnum jobStauts = RinseStatusAndLogCache.getTaskStatusByJobId(jobId);
+            subInstanceId = subInstanceId.trim();
+            JobBizStatusEnum jobStauts = RinseStatusAndLogCache.getTaskStatusByJobId(subInstanceId);
             if (jobStauts != null && !jobStauts.name().equals(JobBizStatusEnum.INTERRUPTED.name())) {
-                logger.info(String.format("【jobId为：%s】的任务被重复调用", jobId));
+                logger.info(String.format("【subInstanceId为：%s】的任务被重复调用", subInstanceId));
                 return;
             }
             if (remoteJobInvokeParamsDto != null) {
@@ -1315,7 +1316,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                 }
                 SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
                 if (startTimeStr != null && endTimeStr != null) {
-                    logger.info(String.format("【jobId为：%s】的任务被调用,", jobId) + "开始时间:" + startTimeStr + ";" + "结束时间:"
+                    logger.info(String.format("【subInstanceId为：%s】的任务被调用,", subInstanceId) + "开始时间:" + startTimeStr + ";" + "结束时间:"
                             + endTimeStr + ".");
                     try {
                         syncBeginTime = sdf.parse(startTimeStr);
@@ -1327,35 +1328,35 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                     }
 
                     if (syncEndTime.after(DateUtils.getNextDay(syncBeginTime)) || !syncEndTime.after(syncBeginTime)) {
-                        String message = String.format("【jobId为：%s】的任务被调用,", jobId) + "开始时间:" + startTimeStr + "超过"
+                        String message = String.format("【subInstanceId为：%s】的任务被调用,", subInstanceId) + "开始时间:" + startTimeStr + "超过"
                                 + "结束时间:" + endTimeStr + "一天或者调度结束时间在开始时间之前";
                         logger.error(message);
                         jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                         // 任务状态日志入库
-                        addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, message);
-                        SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
-                        RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                        addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, message);
+                        SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
+                        RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
                         return;
                     }
                 } else {
-                    String message = String.format("【jobId为：%s】的任务被调用,", jobId) + "传入的开始和结束时间为空.";
+                    String message = String.format("【subInstanceId为：%s】的任务被调用,", subInstanceId) + "传入的开始和结束时间为空.";
                     logger.error(message);
                     jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                     // 任务状态日志入库
-                    addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, message);
-                    SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
-                    RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                    addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, message);
+                    SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
+                    RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
                     return;
                 }
 
             } else {
-                String message = String.format("【jobId为：%s】的任务被调用,", jobId) + "传入的参数为空.";
+                String message = String.format("【subInstanceId为：%s】的任务被调用,", subInstanceId) + "传入的参数为空.";
                 logger.error(message);
                 jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                 // 任务状态日志入库
-                addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, message);
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
-                RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, message);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
+                RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
                 return;
             }
 
@@ -1366,12 +1367,12 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                 // 初始化
                 TaskPropertiesConfig taskConfig = ParseXMLFileUtil.getTaskConfig(groupName, taskName);
 
-                SqoopParams sqoopParams = taskInitMethod(jobId, taskName, groupName, clientTaskStatusLog,
+                SqoopParams sqoopParams = taskInitMethod(subInstanceId, taskName, groupName, clientTaskStatusLog,
                         remoteJobInvokeParamsDto, syncBeginTime, syncEndTime, isRepair, parentJobIdStr, taskConfig);
                 logger.info("==========>enter mq/sqoop sections");
-                saveAppInfo(remoteJobInvokeParamsDto, sqoopParams, jobId);
+                saveAppInfo(remoteJobInvokeParamsDto, sqoopParams, subInstanceId);
                 // 开始执行
-                taskExcuteMethod(jobId, taskName, groupName, clientTaskStatusLog, sqoopParams, syncBeginTime, syncEndTime,
+                taskExcuteMethod(subInstanceId, taskName, groupName, clientTaskStatusLog, sqoopParams, syncBeginTime, syncEndTime,
                         taskConfig);
                 if (PropertyFile.getValue(MessageConstant.TRANSCATION_HISTORY_LOG, "")
                         .contains(groupName + "_" + taskName)) {
@@ -1384,10 +1385,10 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                         message = "更新失败 updateTransactionHisLog";
                         logger.error(String.format("%s：【groupName：%s】【triggerName：%s】", message, groupName, taskName));
                         // 任务状态日志入库
-                        addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, message);
+                        addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum, message);
                         // 发送MQ
-                        SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
-                        RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                        SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
+                        RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
                         return;
                     } else {
                         HiveUtils.updateTransactionHisLog(taskConfig, null, syncBeginTime, syncEndTime, null, 6000, false);
@@ -1397,7 +1398,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                     }
                 }
                 try {
-                    CommUtil.delJobInfo(resumeHiveTaskInfoService, jobId);
+                    CommUtil.delJobInfo(resumeHiveTaskInfoService, subInstanceId);
                 } catch (Exception e) {
                     String message = "删除任务信息失败";
                     logger.error(message, e);
@@ -1408,10 +1409,10 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                 String errMsg = String.format("【groupName：%s】【triggerName：%s】导入出现异常：%s", groupName, taskName,
                         e.getMessage());
                 logger.error(errMsg, e);
-                addTaskLog(jobId, taskName, groupName, jobBizStatusEnum,
+                addTaskLog(subInstanceId, taskName, groupName, jobBizStatusEnum,
                         "执行sqoop命令:" + "中断:" + errMsg.substring(0, Math.min(errMsg.length(), 800)));
-                RinseStatusAndLogCache.removeTaskByJobId(jobId);
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr,
+                RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                         errMsg + "\n" + ExceptionUtil.getStackTrace(e));
                 return;
             }

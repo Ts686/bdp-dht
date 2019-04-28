@@ -107,12 +107,12 @@ public class CommUtil {
     }
 
     public static boolean saveJobInfo(ResumeHiveTaskInfoService resumeHiveTaskInfoService,
-                                      String jobId, String taskName, String groupName,
+                                      String subInstanceId, String taskName, String groupName,
                                       RemoteJobInvokeParamsDto remoteJobInvokeParamsDto, Class executeClass) throws Exception {
         Gson gson = new Gson();
         String jobInfo = gson.toJson(remoteJobInvokeParamsDto);
         ResumeHiveTaskInfo resumeHiveTaskInfo = new ResumeHiveTaskInfo();
-        resumeHiveTaskInfo.setJobId(jobId);
+        resumeHiveTaskInfo.setJobId(subInstanceId);
         resumeHiveTaskInfo.setGroupName(groupName);
         resumeHiveTaskInfo.setTriggerName(taskName);
         resumeHiveTaskInfo.setRemark(executeClass.getSimpleName());
@@ -120,11 +120,12 @@ public class CommUtil {
         return resumeHiveTaskInfoService.insertOrUpdateInstance(resumeHiveTaskInfo) > 0;
     }
 
-    public static boolean delJobInfo(ResumeHiveTaskInfoService resumeHiveTaskInfoService, String jobId) throws Exception {
+    public static boolean delJobInfo(ResumeHiveTaskInfoService resumeHiveTaskInfoService
+            , String subInstanceId) throws Exception {
         ResumeHiveTaskInfoCondition condition = new ResumeHiveTaskInfoCondition();
 //            condition.createCriteria().andJobIdIsNotNull();
-        condition.createCriteria().andJobIdEqualTo(jobId);
-        logger.info("根据jobId=[" + jobId + "]删除resume_hive中数据记录。");
+        condition.createCriteria().andJobIdEqualTo(subInstanceId);
+        logger.info("根据jobId=[" + subInstanceId + "]删除resume_hive中数据记录。");
         boolean flag = false;
         return resumeHiveTaskInfoService.deleteByCondition(condition) > 0;
     }

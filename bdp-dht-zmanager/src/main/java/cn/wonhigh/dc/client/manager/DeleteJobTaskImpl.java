@@ -85,9 +85,9 @@ public class DeleteJobTaskImpl implements RemoteJobServiceExtWithParams {
 //    }
 
     //    @Override
-    public void executeJobWithParams(String jobId, String taskName, String groupName,
+    public void executeJobWithParams(String instanceId, String taskName, String groupName,
                                      RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) {
-        DeleteJobTaskImplThread dataLoadingTaskImplThread = new DeleteJobTaskImplThread(jobId, taskName, groupName);
+        DeleteJobTaskImplThread dataLoadingTaskImplThread = new DeleteJobTaskImplThread(instanceId, taskName, groupName);
         pools.submit(dataLoadingTaskImplThread);
         logger.info("DeleteJobTaskImplThread started...");
     }
@@ -147,12 +147,12 @@ public class DeleteJobTaskImpl implements RemoteJobServiceExtWithParams {
 
     class DeleteJobTaskImplThread implements Runnable {
         private final Logger logger = Logger.getLogger(DeleteJobTaskImplThread.class);
-        private String jobId;
+        private String instanceId;
         private String taskName;
         private String groupName;
 
-        public DeleteJobTaskImplThread(String jobId, String taskName, String groupName) {
-            this.jobId = jobId;
+        public DeleteJobTaskImplThread(String instanceId, String taskName, String groupName) {
+            this.instanceId = instanceId;
             this.taskName = taskName;
             this.groupName = groupName;
         }
@@ -162,8 +162,8 @@ public class DeleteJobTaskImpl implements RemoteJobServiceExtWithParams {
             JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INITIALIZING;
             String message = String.format("撤销正在运行的任务  【groupName：%s】【triggerName：%s】", groupName, taskName);
             logger.info(message);
-            addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, message);
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
+            addTaskLog(instanceId, taskName, groupName, jobBizStatusEnum, message);
+//            SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
             try {
                 logger.info("Yarn client start initialize");
                 YarnClient client = new YarnClientImpl();
@@ -172,16 +172,18 @@ public class DeleteJobTaskImpl implements RemoteJobServiceExtWithParams {
                 logger.info("Yarn client initialized");
                 //需要注意，调度传过来的jobId实际为子实例id，所以后端需要使用subInstanceId进行过滤
                 List<String> killAppIds = applicationInfoService.selectByInstandId(
-                        Arrays.asList(jobId.split(",")));
+                        Arrays.asList(instanceId.split(",")));
                 // 执行myTest.sh 参数为java Know dummy
                 if (!killAppIds.isEmpty()) {
                     for (String appId : killAppIds) {
-                        logger.info("正在撤销的jobId=【" + jobId + "】,appId=【" + appId + "】");
+                        logger.info(String.format("正在撤销任务groupName:【%s】,taskName【%s】;" +
+                                "jobId=【%s】,appId=【%s】", groupName, taskName, instanceId, appId));
                         if (StringUtils.isNotEmpty(appId)) {
                             String[] split = appId.split("_");
-                            ApplicationId id = ApplicationId.newInstance(Long.parseLong(split[1]), Integer.parseInt(split[2]));
+                            ApplicationId id = ApplicationId.newInstance(Long.parseLong(split[1]),
+                                    Integer.parseInt(split[2]));
                             client.killApplication(id);
-                            logger.info("撤销任务成功,jobId=【" + jobId + "】" + "appId=【" + appId + "】");
+                            logger.info("撤销任务成功,jobId=【" + instanceId + "】" + "appId=【" + appId + "】");
                         } else {
                             logger.info("撤销任务失败，正在撤销的任务暂未提交到YARN");
                         }
@@ -189,17 +191,17 @@ public class DeleteJobTaskImpl implements RemoteJobServiceExtWithParams {
                 }
 
                 jobBizStatusEnum = JobBizStatusEnum.FINISHED;
-                addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, message);
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
-                RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                addTaskLog(instanceId, taskName, groupName, jobBizStatusEnum, message);
+                SendMsg2AMQ.updateStatusAndSendMsg(instanceId, jobBizStatusEnum, jmsClusterMgr, message);
+                RinseStatusAndLogCache.removeTaskByJobId(instanceId);
                 logger.info("DeleteJobTaskImplThread succcessful...");
             } catch (Exception e) {
                 message = String.format("撤销任务失败【groupName：%s】【triggerName：%s】", groupName, taskName);
                 logger.error(message);
                 jobBizStatusEnum = JobBizStatusEnum.STOPED;
-                addTaskLog(jobId, taskName, groupName, jobBizStatusEnum, message);
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
-                RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                addTaskLog(instanceId, taskName, groupName, jobBizStatusEnum, message);
+                SendMsg2AMQ.updateStatusAndSendMsg(instanceId, jobBizStatusEnum, jmsClusterMgr, message);
+                RinseStatusAndLogCache.removeTaskByJobId(instanceId);
                 logger.error(ExceptionUtil.getStackTrace(e), e);
             }
         }

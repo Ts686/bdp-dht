@@ -111,14 +111,14 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
             returnList.add(endTimeStr);
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             if (startTimeStr != null && endTimeStr != null) {
-                logger.info(String.format("【jobId为：%s】的任务被调用,开始时间:%s ;结束时间:%s .", taskId, startTimeStr, endTimeStr));
+                logger.info(String.format("【subInstanceId为：%s】的任务被调用,开始时间:%s ;结束时间:%s .", taskId, startTimeStr, endTimeStr));
                 try {
                     Date syncBeginTime = sdf.parse(startTimeStr);
                     Date syncEndTime = sdf.parse(endTimeStr);
                     returnList.add(syncBeginTime);
                     returnList.add(syncEndTime);
                 } catch (ParseException e) {
-                    RuntimeException runtimeException = new RuntimeException(String.format("【jobId为：%s】的任务被调用,开始时间:%s ;结束时间:%s 转换出现异常", taskId,
+                    RuntimeException runtimeException = new RuntimeException(String.format("【subInstanceId为：%s】的任务被调用,开始时间:%s ;结束时间:%s 转换出现异常", taskId,
                             startTimeStr, endTimeStr));
                     JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
                     SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
@@ -126,7 +126,7 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
                     throw runtimeException;
                 }
             } else {
-                ManagerException managerException = new ManagerException(String.format("【jobId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
+                ManagerException managerException = new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
                 JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
                 SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
                         ExceptionUtil.getStackTrace(managerException));
@@ -134,7 +134,7 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
             }
 
         } else {
-            ManagerException managerException = new ManagerException(String.format("【jobId为：%s】的任务被调用,传入的参数为空.", taskId));
+            ManagerException managerException = new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的参数为空.", taskId));
             JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
             SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
                     ExceptionUtil.getStackTrace(managerException));
@@ -144,9 +144,9 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
     }
 
     @Override
-    public void executeJobWithParams(String jobId, String triggerName, String groupName,
+    public void executeJobWithParams(String subInstanceId, String triggerName, String groupName,
                                      RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) {
-        DataCleaningTaskImplThread dataLoadingTaskImplThread = new DataCleaningTaskImplThread(jobId, triggerName, groupName, remoteJobInvokeParamsDto);
+        DataCleaningTaskImplThread dataLoadingTaskImplThread = new DataCleaningTaskImplThread(subInstanceId, triggerName, groupName, remoteJobInvokeParamsDto);
         logger.info(String.format("数据清洗任务开始执行，线程池信息:当前线程池中线程数量【%d】,核心线程数【%d】,活跃线程数【%d】,缓存到队列的任务数量【%d】"
                 , pools.getPoolSize(), pools.getCorePoolSize(), pools.getActiveCount(), pools.getQueue().size()));
         pools.submit(dataLoadingTaskImplThread);
@@ -160,12 +160,12 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
      *
      * @param jobName
      * @param taskConfig
-     * @param jobId
+     * @param subInstanceId
      * @param syncBeginTime
      * @param syncEndTime
      * @throws Throwable
      */
-    private boolean increamentCleaningData(String jobName, TaskPropertiesConfig taskConfig, String jobId, Date syncBeginTime,
+    private boolean increamentCleaningData(String jobName, TaskPropertiesConfig taskConfig, String subInstanceId, Date syncBeginTime,
                                            Date syncEndTime) throws Throwable {
         String groupName = taskConfig.getGroupName();
         String taskName = taskConfig.getTriggerName();
@@ -248,9 +248,9 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
     }
 
     @Override
-    public JobBizStatusEnum getJobStatus(String jobId, String triggerName, String groupName) {
+    public JobBizStatusEnum getJobStatus(String subInstanceId, String triggerName, String groupName) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("taskId", jobId);
+        params.put("taskId", subInstanceId);
         params.put("schedulerName", triggerName);
         params.put("groupName", groupName);
         ClientTaskStatusLog clientTaskStatusLog = clientTaskStatusLogService.findLastestStatus(params);
@@ -266,37 +266,37 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
     }
 
     @Override
-    public String getLogs(String jobId, String triggerName, String groupName, long lastDate) {
+    public String getLogs(String subInstanceId, String triggerName, String groupName, long lastDate) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void initializeJob(String jobId, String triggerName, String groupName) {
+    public void initializeJob(String subInstanceId, String triggerName, String groupName) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void pauseJob(String jobId, String triggerName, String groupName) {
+    public void pauseJob(String subInstanceId, String triggerName, String groupName) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void restartJob(String jobId, String triggerName, String groupName) {
+    public void restartJob(String subInstanceId, String triggerName, String groupName) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void resumeJob(String jobId, String triggerName, String groupName) {
+    public void resumeJob(String subInstanceId, String triggerName, String groupName) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void stopJob(String jobId, String triggerName, String groupName) {
+    public void stopJob(String subInstanceId, String triggerName, String groupName) {
         // TODO Auto-generated method stub
 
     }
@@ -316,9 +316,9 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
         executeJobWithParams(GernerateUuidUtils.getUUID(), triggerName, groupName, rD);
     }
 
-    private void saveAppInfo(RemoteJobInvokeParamsDto remoteJobInvokeParamsDto, String jobName, String jobId) {
+    private void saveAppInfo(RemoteJobInvokeParamsDto remoteJobInvokeParamsDto, String jobName, String subInstanceId) {
         String instanceId = remoteJobInvokeParamsDto.getParam("instanceId");
-        String subInstanceId = remoteJobInvokeParamsDto.getParam("subInstanceId");
+        String jobId = remoteJobInvokeParamsDto.getParam("jobId");
         Map<String, String> res = new HashMap<String, String>();
         res.put("scheduleId", jobId);
         res.put("taskParentId", instanceId);
@@ -336,14 +336,14 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
     class DataCleaningTaskImplThread implements Runnable {
 
         private final Logger logger = Logger.getLogger(DataCleaningTaskImplThread.class);
-        private String jobId;
+        private String subInstanceId;
         private String triggerName;
         private String groupName;
         private RemoteJobInvokeParamsDto remoteJobInvokeParamsDto;
 
-        public DataCleaningTaskImplThread(String jobId, String triggerName, String groupName,
+        public DataCleaningTaskImplThread(String subInstanceId, String triggerName, String groupName,
                                           RemoteJobInvokeParamsDto remoteJobInvokeParamsDto) {
-            this.jobId = jobId;
+            this.subInstanceId = subInstanceId;
             this.triggerName = triggerName;
             this.groupName = groupName;
             this.remoteJobInvokeParamsDto = remoteJobInvokeParamsDto;
@@ -353,16 +353,16 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
         public void run() {
             //保存任务信息
             try {
-                boolean insertJobInfo = CommUtil.saveJobInfo(resumeHiveTaskInfoService, jobId, triggerName, groupName,
+                boolean insertJobInfo = CommUtil.saveJobInfo(resumeHiveTaskInfoService, subInstanceId, triggerName, groupName,
                         remoteJobInvokeParamsDto, DataCleaningTaskImpl.class);
             } catch (Exception e) {
                 String message = "保存任务信息失败";
                 logger.error(message, e);
             }
             //如果重复调用，则忽略本次请求
-            JobBizStatusEnum jobStauts = RinseStatusAndLogCache.getTaskStatusByJobId(jobId);
+            JobBizStatusEnum jobStauts = RinseStatusAndLogCache.getTaskStatusByJobId(subInstanceId);
             if (null != jobStauts && !jobStauts.name().equals(JobBizStatusEnum.INTERRUPTED.name())) {
-                logger.info(String.format("【jobId为：%s】的任务被重复调用", jobId));
+                logger.info(String.format("【subInstanceId为：%s】的任务被重复调用", subInstanceId));
                 return;
             }
             String startTimeStr = null;
@@ -375,9 +375,9 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
 
             //taskName = taskName.trim();
 
-            jobStauts = RinseStatusAndLogCache.getTaskStatusByJobId(jobId);
+            jobStauts = RinseStatusAndLogCache.getTaskStatusByJobId(subInstanceId);
             if (jobStauts != null && !jobStauts.name().equals(JobBizStatusEnum.INTERRUPTED.name())) {
-                logger.info(String.format("【jobId为：%s】的任务被重复调用", jobId));
+                logger.info(String.format("【subInstanceId为：%s】的任务被重复调用", subInstanceId));
                 return;
             }
             if (remoteJobInvokeParamsDto != null) {
@@ -387,86 +387,86 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
 
                 SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
                 if (startTimeStr != null && endTimeStr != null) {
-                    logger.info(String.format("【jobId为：%s】的任务被调用,", jobId) + "开始时间:" + startTimeStr + ";" + "结束时间:"
+                    logger.info(String.format("【subInstanceId为：%s】的任务被调用,", subInstanceId) + "开始时间:" + startTimeStr + ";" + "结束时间:"
                             + endTimeStr + ".");
                     try {
                         syncBeginTime = sdf.parse(startTimeStr);
                         syncEndTime = sdf.parse(endTimeStr);
                     } catch (ParseException e) {
                         jobBizStatusEnum = JobBizStatusEnum.STOPED;
-                        SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum,
+                        SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum,
                                 jmsClusterMgr, ExceptionUtil.getStackTrace(e));
                         logger.error(e.getMessage(), e);
                         return;
                     }
 
                 } else {
-                    message = String.format("【jobId为：%s】的任务被调用,", jobId) + "传入的开始和结束时间为空.";
+                    message = String.format("【subInstanceId为：%s】的任务被调用,", subInstanceId) + "传入的开始和结束时间为空.";
                     logger.error(message);
                     jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                     // 任务状态日志入库
-                    addTaskLog(jobId, triggerName, groupName, jobBizStatusEnum, message);
-                    SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
-                    RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                    addTaskLog(subInstanceId, triggerName, groupName, jobBizStatusEnum, message);
+                    SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
+                    RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
                     return;
                 }
 
             } else {
-                message = String.format("【jobId为：%s】的任务被调用,", jobId) + "传入的参数为空.";
+                message = String.format("【subInstanceId为：%s】的任务被调用,", subInstanceId) + "传入的参数为空.";
                 logger.error(message);
                 jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                 // 任务状态日志入库
-                addTaskLog(jobId, triggerName, groupName, jobBizStatusEnum, message);
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
-                RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                addTaskLog(subInstanceId, triggerName, groupName, jobBizStatusEnum, message);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
+                RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
                 return;
             }
             try {
                 jobBizStatusEnum = JobBizStatusEnum.INITIALIZING;
                 message = "正在初始化";
-                logger.info(String.format("%s: 【jobId：%s】【groupName：%s】【triggerName：%s】", message, jobId, groupName,
+                logger.info(String.format("%s: 【subInstanceId：%s】【groupName：%s】【triggerName：%s】", message, subInstanceId, groupName,
                         triggerName));
                 // 任务状态日志入库
-                addTaskLog(jobId, triggerName, groupName, jobBizStatusEnum, message);
+                addTaskLog(subInstanceId, triggerName, groupName, jobBizStatusEnum, message);
                 // 发送MQ
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
 
 			/*
              * 初始化变量
 			 */
                 message = "开始读取任务配置信息";
-                logger.info(String.format("%s: 【jobId：%s】【groupName：%s】【triggerName：%s】", message, jobId, groupName,
+                logger.info(String.format("%s: 【subInstanceId：%s】【groupName：%s】【triggerName：%s】", message, subInstanceId, groupName,
                         triggerName));
 
-                TaskPropertiesConfig taskConfig = CommUtil.checkTaskExecCondition(groupName, triggerName, jobId);
+                TaskPropertiesConfig taskConfig = CommUtil.checkTaskExecCondition(groupName, triggerName, subInstanceId);
                 if (taskConfig == null) {
                     jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                     message = "获取任务配置信息失败";
                     logger.error(String.format("%s：【groupName：%s】【triggerName：%s】", message, groupName, triggerName));
                     // 任务状态日志入库
-                    addTaskLog(jobId, triggerName, groupName, jobBizStatusEnum, message);
+                    addTaskLog(subInstanceId, triggerName, groupName, jobBizStatusEnum, message);
                     // 发送MQ
-                    SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
-                    RinseStatusAndLogCache.removeTaskByJobId(jobId);
+                    SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
+                    RinseStatusAndLogCache.removeTaskByJobId(subInstanceId);
                     return;
                 }
 
                 //增量清洗
                 message = "[**************进入增量表清洗****************]";
-                logger.info(String.format("%s: 【jobId：%s】【groupName：%s】【triggerName：%s】", message, jobId, groupName,
+                logger.info(String.format("%s: 【subInstanceId：%s】【groupName：%s】【triggerName：%s】", message, subInstanceId, groupName,
                         triggerName));
                 jobBizStatusEnum = JobBizStatusEnum.RUNNING;
                 message = "初始化完成，正在运行";
                 logger.info(String.format("***********>%s：【groupName：%s】【triggerName：%s】", message, groupName, taskConfig.getTriggerName()));
                 // 任务状态日志入库
-                addTaskLog(jobId, taskConfig.getTriggerName(), groupName, jobBizStatusEnum, message);
+                addTaskLog(subInstanceId, taskConfig.getTriggerName(), groupName, jobBizStatusEnum, message);
                 // 发送MQ
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
                 String jobName = String.format("%s-%s-%s_%s", "hive", taskConfig.getGroupName(),
                         taskConfig.getTriggerName(), System.currentTimeMillis());
                 logger.info(String.format("!!!数据清洗任务开始执行,groupName【%s】,taskName【%s】",
                         groupName, triggerName));
-                saveAppInfo(remoteJobInvokeParamsDto, jobName, jobId);
+                saveAppInfo(remoteJobInvokeParamsDto, jobName, subInstanceId);
                 if (taskConfig.getIsOverwrite() == 0) {
 
                     if (taskConfig.getSyncType() != null
@@ -487,28 +487,28 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
                                         .getSelectPreMonth(), new Date[]{syncBeginTime, syncEndTime});
                     } else if (taskConfig.getSyncType() != null
                             && taskConfig.getSyncType().equals(SyncTypeEnum.SYNC_TYPE_0.getValue())) {
-                        increamentCleaningData(jobName, taskConfig, jobId, syncBeginTime, syncEndTime);
+                        increamentCleaningData(jobName, taskConfig, subInstanceId, syncBeginTime, syncEndTime);
                     }
 
                 } else {
                     message = "[**************进入全量表清洗****************]";
-                    logger.info(String.format("%s: 【jobId：%s】【groupName：%s】【triggerName：%s】", message, jobId, groupName,
+                    logger.info(String.format("%s: 【subInstanceId：%s】【groupName：%s】【triggerName：%s】", message, subInstanceId, groupName,
                             triggerName));
-                    HiveUtils.fullTableCleaningDate(remoteJobInvokeParamsDto, jobId, taskConfig,
+                    HiveUtils.fullTableCleaningDate(remoteJobInvokeParamsDto, subInstanceId, taskConfig,
                             hadoopClndParams, 30, jobName);
                 }
                 logger.info(String.format("数据清洗任务执行完成!!!,groupName【%s】,taskName【%s】", groupName, triggerName));
 
                 jobBizStatusEnum = JobBizStatusEnum.FINISHED;
                 message = "数据去重成功";
-                logger.info(String.format("%s: 【jobId：%s】【groupName：%s】【triggerName：%s】", message, jobId, groupName,
+                logger.info(String.format("%s: 【subInstanceId：%s】【groupName：%s】【triggerName：%s】", message, subInstanceId, groupName,
                         triggerName));
                 // 任务状态日志入库
-                addTaskLog(jobId, triggerName, groupName, jobBizStatusEnum, message);
+                addTaskLog(subInstanceId, triggerName, groupName, jobBizStatusEnum, message);
                 // 发送MQ
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum, jmsClusterMgr, message);
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, message);
                 try {
-                    CommUtil.delJobInfo(resumeHiveTaskInfoService, jobId);
+                    CommUtil.delJobInfo(resumeHiveTaskInfoService, subInstanceId);
                 } catch (Exception e) {
                     logger.error("删除任务信息失败", e);
                 }
@@ -517,9 +517,9 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
                 message = "数据去重失败: { " + e.getMessage() + " }";
                 logger.error(message + ": " + e.getMessage());
                 // 任务状态日志入库
-                addTaskLog(jobId, triggerName, groupName, jobBizStatusEnum, message);
+                addTaskLog(subInstanceId, triggerName, groupName, jobBizStatusEnum, message);
                 // 发送MQ
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId, jobBizStatusEnum,
+                SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum,
                         jmsClusterMgr, message + "\n" + ExceptionUtil.getStackTrace(e));
             }
         }
