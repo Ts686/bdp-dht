@@ -276,7 +276,7 @@ public class ApplicationsInfoThread implements Runnable {
             if (temp.contains("FAILED") || temp.contains("KILLED")) {
                 //1：提交到yarn执行失败
                 if ("false".equalsIgnoreCase(isRestart)) {
-                    jobStatusDto.setExecStatus(JobBizStatusEnum.STOPED);
+                    jobStatusDto.setExecStatus(JobBizStatusEnum.INTERRUPTED);
                     logger.info("非重启下：jobId = " + jobStatusDto.getJobId() + "任务为失败状态，通知调度成功，并从缓存删除成功");
                 } else {
                     //失败的hive任务需要进行重新拉起执行，如果自身执行成功，则通知调度为成功

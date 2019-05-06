@@ -69,7 +69,7 @@ public class ExecuteShellTaskImpl implements RemoteJobServiceExtWithParams {
             msg = "调用接口出错，jobId不能为空，请检查。";
             logger.error(msg);
             //发送MQ消息
-            SendMsg2AMQ.updateStatusAndSendMsg(jobId,JobBizStatusEnum.STOPED,jmsClusterMgr,msg);
+            SendMsg2AMQ.updateStatusAndSendMsg(jobId,JobBizStatusEnum.INTERRUPTED,jmsClusterMgr,msg);
             return;
         }
 
@@ -120,7 +120,7 @@ public class ExecuteShellTaskImpl implements RemoteJobServiceExtWithParams {
                 msg ="调用接口出错，脚本名称不能为空，请检查。";
                 logger.error(msg);
                 //发送MQ消息
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId,JobBizStatusEnum.STOPED,jmsClusterMgr,msg);
+                SendMsg2AMQ.updateStatusAndSendMsg(jobId,JobBizStatusEnum.INTERRUPTED,jmsClusterMgr,msg);
                 return;
             }
             if (StringUtils.isBlank(exeUserName)) {
@@ -128,7 +128,7 @@ public class ExecuteShellTaskImpl implements RemoteJobServiceExtWithParams {
                 msg ="调用接口出错，执行脚本用户为空，请检查。";
                 logger.error(msg);
                 //发送MQ消息
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId,JobBizStatusEnum.STOPED,jmsClusterMgr,msg);
+                SendMsg2AMQ.updateStatusAndSendMsg(jobId,JobBizStatusEnum.INTERRUPTED,jmsClusterMgr,msg);
                 return;
             }
             if (StringUtils.isBlank(host)) {
@@ -136,7 +136,7 @@ public class ExecuteShellTaskImpl implements RemoteJobServiceExtWithParams {
                 msg ="调用接口出错，脚本所在主机ip为空，请检查。";
                 logger.error(msg);
                 //发送MQ消息
-                SendMsg2AMQ.updateStatusAndSendMsg(jobId,JobBizStatusEnum.STOPED,jmsClusterMgr,msg);
+                SendMsg2AMQ.updateStatusAndSendMsg(jobId,JobBizStatusEnum.INTERRUPTED,jmsClusterMgr,msg);
                 return;
             }
 

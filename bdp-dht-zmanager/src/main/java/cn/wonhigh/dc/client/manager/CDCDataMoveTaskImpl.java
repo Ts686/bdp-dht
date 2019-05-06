@@ -269,7 +269,7 @@ public class CDCDataMoveTaskImpl implements RemoteJobServiceExtWithParams {
                         syncBeginTime = sdf.parse(startTimeStr);
 //					syncEndTime = sdf.parse(endTimeStr);
                     } catch (ParseException e) {
-                        jobBizStatusEnum = JobBizStatusEnum.STOPED;
+                        jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                         SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum,
                                 jmsClusterMgr, ExceptionUtil.getStackTrace(e));
                         logger.error(e.getMessage(), e);

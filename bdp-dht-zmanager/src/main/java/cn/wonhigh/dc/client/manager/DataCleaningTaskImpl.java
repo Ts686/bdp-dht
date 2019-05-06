@@ -120,14 +120,14 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
                 } catch (ParseException e) {
                     RuntimeException runtimeException = new RuntimeException(String.format("【subInstanceId为：%s】的任务被调用,开始时间:%s ;结束时间:%s 转换出现异常", taskId,
                             startTimeStr, endTimeStr));
-                    JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
+                    JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                     SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
                             ExceptionUtil.getStackTrace(runtimeException));
                     throw runtimeException;
                 }
             } else {
                 ManagerException managerException = new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
-                JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
+                JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                 SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
                         ExceptionUtil.getStackTrace(managerException));
                 throw managerException;
@@ -135,7 +135,7 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
 
         } else {
             ManagerException managerException = new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的参数为空.", taskId));
-            JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
+            JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
             SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
                     ExceptionUtil.getStackTrace(managerException));
             throw managerException;
@@ -393,7 +393,7 @@ public class DataCleaningTaskImpl implements RemoteJobServiceExtWithParams {
                         syncBeginTime = sdf.parse(startTimeStr);
                         syncEndTime = sdf.parse(endTimeStr);
                     } catch (ParseException e) {
-                        jobBizStatusEnum = JobBizStatusEnum.STOPED;
+                        jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                         SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum,
                                 jmsClusterMgr, ExceptionUtil.getStackTrace(e));
                         logger.error(e.getMessage(), e);
