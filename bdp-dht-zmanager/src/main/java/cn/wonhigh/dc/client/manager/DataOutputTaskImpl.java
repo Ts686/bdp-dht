@@ -403,7 +403,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr, messageLocalFo);
             }
         } catch (SQLException e) {
-            JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
+            JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
             SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum,
                     jmsClusterMgr, ExceptionUtil.getStackTrace(e));
             logger.error("导出失败...", e);
@@ -434,7 +434,7 @@ public class DataOutputTaskImpl implements RemoteJobServiceExtWithParams {
                 } catch (ParseException e) {
                     RuntimeException runtimeException = new RuntimeException(String.format("【subInstanceId为：%s】的任务被调用,开始时间:%s ;结束时间:%s 转换出现异常", taskId,
                             startTimeStr, endTimeStr));
-                    JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
+                    JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                     SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr, ExceptionUtil.getStackTrace(e));
                     throw runtimeException;
                 }

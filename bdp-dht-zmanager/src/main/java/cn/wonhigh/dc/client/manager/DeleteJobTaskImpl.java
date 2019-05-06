@@ -198,7 +198,7 @@ public class DeleteJobTaskImpl implements RemoteJobServiceExtWithParams {
             } catch (Exception e) {
                 message = String.format("撤销任务失败【groupName：%s】【triggerName：%s】", groupName, taskName);
                 logger.error(message);
-                jobBizStatusEnum = JobBizStatusEnum.STOPED;
+                jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                 addTaskLog(instanceId, taskName, groupName, jobBizStatusEnum, message);
                 SendMsg2AMQ.updateStatusAndSendMsg(instanceId, jobBizStatusEnum, jmsClusterMgr, message);
                 RinseStatusAndLogCache.removeTaskByJobId(instanceId);

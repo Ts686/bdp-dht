@@ -250,14 +250,14 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
                 } catch (ParseException e) {
                     RuntimeException runtimeException = new RuntimeException(String.format("【subInstanceId为：%s】的任务被调用,开始时间:%s ;结束时间:%s 转换出现异常", taskId,
                             startTimeStr, endTimeStr));
-                    JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
+                    JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                     SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
                             ExceptionUtil.getStackTrace(runtimeException));
                     throw runtimeException;
                 }
             } else {
                 ManagerException managerException = new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
-                JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
+                JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
                 SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
                         ExceptionUtil.getStackTrace(managerException));
                 throw new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的开始和结束时间为空.", taskId));
@@ -265,7 +265,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
 
         } else {
             ManagerException managerException = new ManagerException(String.format("【subInstanceId为：%s】的任务被调用,传入的参数为空.", taskId));
-            JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
+            JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
             SendMsg2AMQ.updateStatusAndSendMsg(taskId, jobBizStatusEnum, jmsClusterMgr,
                     ExceptionUtil.getStackTrace(managerException));
             throw managerException;
@@ -701,14 +701,14 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
         } else if (JobStatus.Repeat == jobExecutionResult.getJobStatus()) {
             // 如果导入命令出现subInstanceId重复
             ManagerException managerException = new ManagerException(jobExecutionResult.getErrorMessage());
-            jobBizStatusEnum = JobBizStatusEnum.STOPED;
+            jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
             SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                     jobExecutionResult.getErrorMessage() + "\n" + ExceptionUtil.getStackTrace(managerException));
             logger.error(managerException.getMessage(), managerException);
         } else {
             ManagerException managerException = new ManagerException(jobExecutionResult.getErrorMessage());
             // 如果导入命令执行失败
-            jobBizStatusEnum = JobBizStatusEnum.STOPED;
+            jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
             SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr,
                     jobExecutionResult.getErrorMessage() + "\n" + ExceptionUtil.getStackTrace(managerException));
             logger.error(managerException.getMessage(), managerException);
@@ -759,7 +759,7 @@ public class DataLoadingTaskImpl implements RemoteJobServiceExtWithParams {
         TaskDatabaseConfig sourceDbEntity = taskConfig.getSourceDbEntity();
         if (sourceDbEntity == null) {
             IllegalArgumentException iilegalError = new IllegalArgumentException("请检查调度任务数据库配置信息");
-            JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.STOPED;
+            JobBizStatusEnum jobBizStatusEnum = JobBizStatusEnum.INTERRUPTED;
             SendMsg2AMQ.updateStatusAndSendMsg(subInstanceId, jobBizStatusEnum, jmsClusterMgr
                     , ExceptionUtil.getStackTrace(iilegalError));
             throw iilegalError;
