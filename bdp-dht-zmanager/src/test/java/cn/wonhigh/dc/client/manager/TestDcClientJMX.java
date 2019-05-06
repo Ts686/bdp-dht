@@ -16,6 +16,8 @@ public class TestDcClientJMX {
         for(int i = 0;i<1;i++){
 //            JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:6088/eltJob");
             JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://10.240.12.24/jndi/rmi://10.240.12.24:6088/eltJob");
+            //生产测试
+//            JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://10.240.20.57/jndi/rmi://10.240.20.57:6088/eltJob");
             JMXConnector jmxc = JMXConnectorFactory.connect(url, null);
 
             MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
@@ -29,9 +31,10 @@ public class TestDcClientJMX {
 //            System.out.println(i+":"+proxy);
             RemoteJobInvokeParamsDto dto = new RemoteJobInvokeParamsDto();
 //            dto.addParam("shellName","/usr/local/test/hello.sh");
-            dto.addParam("shellName","/usr/local/wonhigh/dc/client/bdp-dht/hello.sh");
-            dto.addParam("exeUserName","hive");
-//            dto.addParam("host","172.16.188.110");
+            dto.addParam("shellName","/usr/local/wonhigh/dc/client/test.sh");
+            dto.addParam("exeUserName","bdp_app");
+            //生产测试
+//            dto.addParam("host","10.240.20.57 ");
             dto.addParam("host","10.240.12.24");
             dto.addParam("port","");
             dto.addParam("p1","业务参数_"+i);
