@@ -29,7 +29,7 @@ public class StartMain {
     private static boolean initFlag = false;
 
     public static void init() {
-        logger.info("客户端开始启动...!!");
+        logger.info("客户端开始启动...66");
         ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext();
         try {
             Properties properties = PropertyFile.getProps("");
