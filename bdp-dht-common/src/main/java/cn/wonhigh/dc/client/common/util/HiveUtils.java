@@ -2116,7 +2116,8 @@ public class HiveUtils {
                     .append(HiveDefinePartNameEnum.CDC_TABLE_ID_COLUMN_VALUE.getValue()).append(" is null ")
                     .append(taskConfig.getFilterConditionsStr())
                     //过滤占位记录
-                    .append("and " + "ods_update_time" + " not in ('999999')").append(" union all select ")
+//                    .append("and " + "ods_update_time" + " not in ('999999')").append(" union all select ")
+                    .append("and  nvl(ods_update_time,'999')  not in ('999999')").append(" union all select ")
                     .append(taskConfig.getSelectColumnsStr()).append(" from (select ")
                     .append(taskConfig.getSelectColumnsStr().replace("src_t.partition_date",
                             "date_format(src_t." + taskConfig.getSyncTimeColumn().get(0)))
