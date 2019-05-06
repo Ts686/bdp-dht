@@ -276,9 +276,11 @@ public class ApplicationsInfoThread implements Runnable {
             if (temp.contains("FAILED") || temp.contains("KILLED")) {
                 //1：提交到yarn执行失败
                 if ("false".equalsIgnoreCase(isRestart)) {
-                    jobStatusDto.setExecStatus(JobBizStatusEnum.STOPED);
-                    logger.info("非重启下：jobId = " + jobStatusDto.getJobId() + "任务为失败状态，通知调度成功，并从缓存删除成功");
-                } else {
+                    jobStatusDto.setExecStatus(JobBizStatusEnum.INTERRUPTED);
+                    logger.info("非重启下：jobId = " + jobStatusDto.getJobId() + "任务为中断状态，通知调度成功，并从缓存删除成功");
+                }
+               /* //2019-4-24: 由于Future获取结果阻塞，故可以直接从重启表中进行执行，此时状态再下一次扫描同步
+               else {
                     //失败的hive任务需要进行重新拉起执行，如果自身执行成功，则通知调度为成功
                     FutureTask<String> futureTask = new FutureTask<>(new ResumeHiveCallableThread(jobId, ctx));
                     //由于此处为重启后执行，故取消线程池
@@ -292,7 +294,7 @@ public class ApplicationsInfoThread implements Runnable {
                     }
                     //此时执行失败，暂时不通知调度；待重新扫描全表拉起任务后，再次执行任务时通知调度；
 
-                }
+                }*/
 
 
             } else if (0 != size && size == finishedCount && size==succeededCount) {
